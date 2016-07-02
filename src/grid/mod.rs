@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::usize;
 
 pub mod utils;
 pub mod rules;
@@ -8,6 +9,8 @@ const IS_LIT: u8 = 1<<4;
 const IS_LIGHT: u8 = 1<<5;
 const CANT_LIGHT: u8 = 1<<6;
 const IS_CONSTRAINED: u8 = 1<<7;
+
+const INVALID_POSITION: usize = usize::MAX;
 
 pub struct Grid {
     contents: Vec<u8>,

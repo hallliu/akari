@@ -7,7 +7,7 @@ mod tests;
 
 pub fn get_adj_empties(grid: &GridData, loc: usize) -> ([bool; 4], [usize; 4]) {
     let grid_size = grid.grid.size as usize;
-    let mut res = [0; 4];
+    let mut res = [super::INVALID_POSITION; 4];
     let mut valid = [false; 4];
     let cannot_light = IS_SOLID | IS_LIT | CANT_LIGHT | IS_LIGHT;
 

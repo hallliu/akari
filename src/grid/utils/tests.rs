@@ -14,9 +14,10 @@ _X___";
 fn test_get_adj_empties() {
     let test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
     let mut cases = HashMap::new();
-    cases.insert(0, ([false, true, false, false], [0, 1, 0, 0]));
-    cases.insert(7, ([true, true, true, false], [2, 8, 12, 0]));
-    cases.insert(20, ([false, false, false, false], [0, 1, 0, 0]));
+    let ip = super::super::INVALID_POSITION;
+    cases.insert(0, ([false, true, false, false], [ip, 1, ip, ip]));
+    cases.insert(7, ([true, true, true, false], [2, 8, 12, ip]));
+    cases.insert(20, ([false, false, false, false], [ip, 1, ip, ip]));
     for (pos, expected) in &cases {
         let (valid, positions) = get_adj_empties(&test_grid, *pos);
         for idx in 0..valid.len() {
