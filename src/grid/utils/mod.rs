@@ -5,29 +5,56 @@ use std::char;
 
 mod tests;
 
-pub fn get_adj_empties(grid: &GridData, loc: usize) -> ([bool; 4], [usize; 4]) {
+static EDGE_SPECIFIERS: [fn(usize, usize) -> bool; 4] = [
+    { fn t(loc: usize, size: usize) -> bool { loc < size }; t},
+    { fn t(loc: usize, size: usize) -> bool { loc % size == 0}; t}, 
+    { fn t(loc: usize, size: usize) -> bool { loc + size >= size * size }; t},
+    { fn t(loc: usize, size: usize) -> bool { loc % size == size - 1 }; t}
+];
+
+static EDGE_INVALIDATED_POSITIONS: [[usize; 3]; 4] = [
+    [4, 0, 5],
+    [4, 3, 7],
+    [7, 2, 6],
+    [5, 1, 6]
+];
+
+static RELATIVE_POSITION_SPECIFIERS: [fn(usize, usize) -> usize; 8] = [
+    { fn t(loc: usize, size: usize) -> usize { loc - size }; t},
+    { fn t(loc: usize, size: usize) -> usize { loc + 1 }; t},
+    { fn t(loc: usize, size: usize) -> usize { loc + size }; t},
+    { fn t(loc: usize, size: usize) -> usize { loc - 1 }; t},
+    { fn t(loc: usize, size: usize) -> usize { loc - size - 1 }; t},
+    { fn t(loc: usize, size: usize) -> usize { loc - size + 1 }; t},
+    { fn t(loc: usize, size: usize) -> usize { loc + size + 1 }; t},
+    { fn t(loc: usize, size: usize) -> usize { loc + size - 1 }; t},
+];
+
+pub fn get_neighbors(grid: &GridData, loc: usize) -> ([bool; 8], [usize; 8]) {
     let grid_size = grid.grid.size as usize;
-    let mut res = [super::INVALID_POSITION; 4];
-    let mut valid = [false; 4];
+    let contents = &grid.grid.contents;
+
+    let mut res = [super::INVALID_POSITION; 8];
+    let mut valid = [true; 8];
+    let mut is_empty = [false; 8];
     let cannot_light = IS_SOLID | IS_LIT | CANT_LIGHT | IS_LIGHT;
 
-    if loc >= grid_size {
-        res[0] = loc - grid_size;
-        valid[0] = grid.grid.contents[res[0]] & cannot_light == 0;
+    for (spec, inv_pos) in EDGE_SPECIFIERS.iter().zip(EDGE_INVALIDATED_POSITIONS.iter()) {
+        if spec(loc, grid_size) {
+            for &i in inv_pos.iter() {
+                valid[i] = false;
+            }
+        }
     }
-    if loc % grid_size != grid_size - 1 {
-        res[1] = loc + 1;
-        valid[1] = grid.grid.contents[res[1]] & cannot_light == 0;
+
+    for (idx, pos_spec) in RELATIVE_POSITION_SPECIFIERS.iter().enumerate() {
+        if valid[idx] {
+            let nbr_pos = pos_spec(loc, grid_size);
+            res[idx] = nbr_pos;
+            is_empty[idx] = contents[nbr_pos] & cannot_light == 0;
+        }
     }
-    if loc + grid_size < grid_size * grid_size {
-        res[2] = loc + grid_size;
-        valid[2] = grid.grid.contents[res[2]] & cannot_light == 0;
-    }
-    if loc % grid_size != 0 {
-        res[3] = loc - 1;
-        valid[3] = grid.grid.contents[res[3]] & cannot_light == 0;
-    }
-    (valid, res)
+    (is_empty, res)
 }
 
 pub fn insert_light(grid: &mut GridData, loc: usize) {

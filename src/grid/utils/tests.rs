@@ -15,11 +15,14 @@ fn test_get_adj_empties() {
     let test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
     let mut cases = HashMap::new();
     let ip = super::super::INVALID_POSITION;
-    cases.insert(0, ([false, true, false, false], [ip, 1, ip, ip]));
-    cases.insert(7, ([true, true, true, false], [2, 8, 12, ip]));
-    cases.insert(20, ([false, false, false, false], [ip, 1, ip, ip]));
+    cases.insert(0, ([false, true, false, false, false, false, false, false],
+                     [ip, 1, 5, ip, ip, ip, 6, ip]));
+    cases.insert(7, ([true, true, true, false, true, true, true, false],
+                     [2, 8, 12, 6, 1, 3, 13, 11]));
+    cases.insert(20, ([false, false, false, false, false, true, false, false],
+                      [15, 1, ip, ip, ip, 16, ip, ip]));
     for (pos, expected) in &cases {
-        let (valid, positions) = get_adj_empties(&test_grid, *pos);
+        let (valid, positions) = get_neighbors(&test_grid, *pos);
         for idx in 0..valid.len() {
             assert_eq!(valid[idx], expected.0[idx]);
             if valid[idx] {
