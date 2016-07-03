@@ -82,7 +82,7 @@ pub fn insert_light(grid: &mut GridData, loc: usize) {
 
 pub fn precompute_data(grid: Grid) -> GridData {
     let mut sight_lines = HashMap::new();
-    for i in 0..(grid.size * grid.size - 1) {
+    for i in 0..(grid.size * grid.size) {
         if grid.contents[i as usize] & IS_SOLID == 0 {
             sight_lines.insert(i as usize, get_sight_line(&grid, i));
         }
