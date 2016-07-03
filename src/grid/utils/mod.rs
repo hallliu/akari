@@ -3,8 +3,16 @@ use super::*;
 use std::collections::HashMap;
 use std::char;
 
+#[cfg(test)]
 mod tests;
 
+// The numbering scheme for neighbors and corners looks like this:
+// 4 0 5
+// 3 X 1
+// 7 2 6
+// where X is the location in question.
+
+#[allow(unused_variables)]
 static EDGE_SPECIFIERS: [fn(usize, usize) -> bool; 4] = [
     { fn t(loc: usize, size: usize) -> bool { loc < size }; t},
     { fn t(loc: usize, size: usize) -> bool { loc % size == 0}; t}, 
@@ -19,6 +27,7 @@ static EDGE_INVALIDATED_POSITIONS: [[usize; 3]; 4] = [
     [5, 1, 6]
 ];
 
+#[allow(unused_variables)]
 static RELATIVE_POSITION_SPECIFIERS: [fn(usize, usize) -> usize; 8] = [
     { fn t(loc: usize, size: usize) -> usize { loc - size }; t},
     { fn t(loc: usize, size: usize) -> usize { loc + 1 }; t},
@@ -161,6 +170,8 @@ pub fn print_grid_to_string(grid: &Grid, pretty_print: bool) -> String {
             s.push('X');
         } else if val & IS_LIT != 0 {
             s.push('#');
+        } else if val & CANT_LIGHT != 0 {
+            s.push('^');
         } else {
             s.push('_');
         }
