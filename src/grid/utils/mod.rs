@@ -92,7 +92,6 @@ pub fn precompute_data(grid: Grid) -> GridData {
 
 pub fn get_sight_line(grid: &Grid, idx: i32) -> Vec<usize> {
     let mut result: Vec<usize> = Vec::with_capacity((grid.size * 2 - 1) as usize);
-    result.push(idx as usize);
     
     let mut right_idx = idx + 1;
     while right_idx % grid.size != 0 {
@@ -130,6 +129,7 @@ pub fn get_sight_line(grid: &Grid, idx: i32) -> Vec<usize> {
         down_idx += grid.size;
     }
 
+    result.sort();
     result
 }
 
@@ -142,6 +142,7 @@ pub fn get_grid_from_string(input: &str, num_squares: i32) -> Result<Grid, Strin
         for c in grid_line.as_bytes() {
             data.push(match *c {
                 b'X' => IS_SOLID,
+                b'^' => CANT_LIGHT,
                 b'0' => IS_SOLID | IS_CONSTRAINED,
                 b'1' => 1 | IS_SOLID | IS_CONSTRAINED,
                 b'2' => 2 | IS_SOLID | IS_CONSTRAINED,

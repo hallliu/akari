@@ -59,10 +59,10 @@ fn test_sight_line() {
 
     let test_locations = vec!(0, 1, 8, 20);
     let expected_sight_lines: Vec<HashSet<usize>> = vec!(
-        vec!(0, 1, 2, 3).into_iter().collect(),
-        vec!(0, 1, 2, 3).into_iter().collect(),
-        vec!(8, 3, 7, 13).into_iter().collect(),
-        vec!(20).into_iter().collect());
+        vec!(1, 2, 3).into_iter().collect(),
+        vec!(0, 2, 3).into_iter().collect(),
+        vec!(3, 7, 13).into_iter().collect(),
+        vec!().into_iter().collect());
 
     for (loc, expected) in test_locations.iter().zip(expected_sight_lines) {
         let sight_line: HashSet<usize> = get_sight_line(&test_grid_1, *loc).into_iter().collect();

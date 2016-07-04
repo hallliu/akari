@@ -46,10 +46,10 @@ pub fn apply_constraint_rule(grid: &mut GridData, loc: usize) -> bool {
         apply_number_light_rule(grid, valid_4, positions_4);
         return true;
     } else if effective_constraint_num + 1 == num_valid {
-        apply_number_corner_rule(grid, effective_constraint_num, &valid, &positions)
-
+        apply_number_corner_rule(grid, effective_constraint_num, &valid, &positions);
+        return true;
     }
-    true
+    false 
 }
 
 fn apply_number_light_rule(grid: &mut GridData, valid: &[bool], positions: &[usize]) {
@@ -102,4 +102,64 @@ fn count_surrounding_lights(grid_contents: &Vec<u8>, adjacents: &[usize]) -> u8 
             a
         }
     })
+}
+
+pub fn apply_spatial_rule(grid: &mut GridData, loc: usize) -> bool {
+    if grid.grid.contents[loc] & (IS_LIT | IS_LIGHT) != 0 {
+        return false;
+    }
+    let sl = match get_filtered_sight_line(grid, loc) {
+        Some(x) => x,
+        None => { return false; }
+    };
+    if sl.len() == 0 && grid.grid.contents[loc] & CANT_LIGHT == 0 {
+        insert_light(grid, loc);
+        return true;
+    } else if sl.len() == 1 && grid.grid.contents[loc] & CANT_LIGHT != 0 {
+        insert_light(grid, sl[0]);
+        return true;
+    } else if sl.len() == 2 && grid.grid.contents[loc] & CANT_LIGHT != 0 {
+        match compute_sight_corner_rule(grid, &sl, loc) {
+            Some(x) => {
+                grid.grid.contents[x] |= CANT_LIGHT;
+                return true;
+            },
+            None => { return false; }
+        }
+    }
+
+    return false;
+}
+
+fn get_filtered_sight_line(grid: &GridData, loc: usize) -> Option<Vec<usize>> {
+    match grid.sight_lines.get(&loc) {
+        Some(sl) => 
+            Some(sl.into_iter()
+                .filter(|&&x| grid.grid.contents[x] & (CANT_LIGHT | IS_LIT) == 0)
+                .map(usize::clone)
+                .collect()),
+        None => None
+    }
+}
+
+fn compute_sight_corner_rule(grid: &GridData, valid_sl: &Vec<usize>, loc: usize) -> Option<usize> {
+    if valid_sl.len() != 2 {
+        return None;
+    }
+    let diff0 = valid_sl[0] as i32 - loc as i32;
+    let diff1 = valid_sl[1] as i32 - loc as i32;
+    if (diff0.abs() < grid.grid.size && diff1.abs() < grid.grid.size) ||
+        (diff0.abs() % grid.grid.size == 0 && diff1.abs() % grid.grid.size == 0) {
+        return None;
+    }
+    let potential_mark = (loc as i32 + diff0 + diff1) as usize;
+    let sight_of_potential_mark = match grid.sight_lines.get(&potential_mark) {
+        Some(v) => v,
+        None => { return None; }
+    };
+    match (sight_of_potential_mark.binary_search(&valid_sl[0]),
+        sight_of_potential_mark.binary_search(&valid_sl[1])) {
+        (Ok(_), Ok(_)) => { return Some(potential_mark); }
+        _ => { return None; }
+    }
 }
