@@ -1,4 +1,5 @@
 target/
+glucose-syrup/*
 Cargo.lock
 *.swp
 *.swo
