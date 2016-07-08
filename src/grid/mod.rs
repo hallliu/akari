@@ -3,6 +3,7 @@ use std::usize;
 
 pub mod utils;
 pub mod rules;
+pub mod cnf_format;
 
 const IS_SOLID: u8 = 1<<3;
 const IS_LIT: u8 = 1<<4;

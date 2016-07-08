@@ -11,6 +11,8 @@ mod tests;
 // 7 2 6
 // where X is the location in question.
 
+const INVALID_RELATIVE_POSITION: u8 = 255;
+
 static CORNER_RULE_LUT_1: [([bool; 4], [u8; 4]); 4] = [
     ([true, true, false, false], [5, 255, 255, 255]),
     ([false, true, true, false], [6, 255, 255, 255]),
@@ -28,8 +30,6 @@ static CORNER_RULE_LUT_2: [([bool; 4], [u8; 4]); 4] = [
 static CORNER_RULE_LUT_3: [([bool; 4], [u8; 4]); 1] = [
     ([true, true, true, true], [4, 5, 6, 7])
 ];
-
-const INVALID_RELATIVE_POSITION: u8 = 255;
 
 pub fn apply_constraint_rule(grid: &mut GridData, loc: usize) -> bool {
     let (valid, positions) = get_neighbors(grid, loc);
