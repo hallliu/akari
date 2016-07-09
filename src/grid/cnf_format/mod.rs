@@ -5,6 +5,11 @@ use super::utils::get_neighbors;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::vec::Vec;
+use std::iter::Map;
+use std::boxed::Box;
+
+#[cfg(test)]
+mod tests;
 
 const CANNOT_BE_LIGHT: u8 = IS_SOLID | IS_LIT | IS_LIGHT | CANT_LIGHT;
 const CONSTRAINT_NUM_MASK: u8 = 0x7;
@@ -16,8 +21,13 @@ pub struct CnfFormula {
 }
 
 struct ConstraintCnfGenerator {
-    constraint_size: u32,
-    cnf_clauses: Vec<(u32, Vec<bool>)>
+    total_size: u32,
+    cnf_clauses: Vec<Vec<(u32, Vec<bool>)>>
+}
+
+fn make_constraint_cnf_generator(size: u32) -> ConstraintCnfGenerator {
+    let clauses = (0..(size + 1)).map(|i| make_constraint_cnf_cache(i)).collect();
+    ConstraintCnfGenerator { total_size: size, cnf_clauses: clauses }
 }
 
 fn make_constraint_cnf_cache(size: u32) -> Vec<(u32, Vec<bool>)> { 
@@ -42,16 +52,42 @@ fn make_constraint_cnf_cache(size: u32) -> Vec<(u32, Vec<bool>)> {
     result
 }
 
-pub fn make_cnf_formula(grid: &GridData) { //-> CnfFormula {
+impl ConstraintCnfGenerator {
+    fn get_constraints<'a>(&'a self, sat_ids: Vec<i32>, num_true: u32) -> Box<Iterator<Item=Vec<i32>> + 'a> {
+        let ref bool_arrays = self.cnf_clauses[sat_ids.len()];
+        Box::new(bool_arrays.iter()
+            .filter(move |&x| x.0 != num_true)
+            .map(move |x| x.1.iter().enumerate().map(|y: (usize, &bool)| {
+                if *y.1 {
+                    -sat_ids[y.0]
+                } else {
+                    sat_ids[y.0]
+                }
+            }).collect()))
+    }
+}
+
+pub fn make_cnf_formula(grid: &GridData) -> CnfFormula {
     let (grid_to_cnf, cnf_to_grid) = produce_variable_mapping(grid);
-    //let mut clauses = Vec::new();
+    let mut clauses = Vec::new();
     let mut sorted_cnf_ids = cnf_to_grid.keys().cloned().collect::<Vec<i32>>();
+    let constraint_cnf_gen = make_constraint_cnf_generator(4);
+
     sorted_cnf_ids.sort();
-    for grid_idx in 0..(grid.grid.size * grid.grid.size) {
-        if can_disregard(grid.grid.contents[grid_idx as usize]) {
+    for grid_idx in 0..((grid.grid.size * grid.grid.size) as usize) {
+        if can_disregard(grid.grid.contents[grid_idx]) {
             continue;
         }
-        //let primary_clause = if grid.grid.contents[grid_idx] & IS_CONSTRAINED != 0 {
+        if grid.grid.contents[grid_idx] & IS_CONSTRAINED != 0 {
+            clauses.extend(get_numerical_constraint_clauses(grid, &constraint_cnf_gen, &grid_to_cnf, grid_idx));
+        }
+
+    }
+
+    CnfFormula {
+        grid_to_cnf_position_mapping: grid_to_cnf,
+        cnf_to_grid_position_mapping: cnf_to_grid,
+        clauses: clauses
     }
 }
 
@@ -80,8 +116,9 @@ fn can_disregard(val: u8) -> bool {
         || (val & IS_SOLID == 0 && (val & IS_LIT != 0 || val & IS_LIGHT != 0))
 }
 
-fn get_numerical_constraint_clauses(grid: &GridData,
-                                   to_cnf: HashMap<usize, i32>, loc: usize) -> Vec<Vec<i32>> {
+fn get_numerical_constraint_clauses<'a, 'b>(
+    grid: &'a GridData, gen: &'b ConstraintCnfGenerator,
+    to_cnf: &'a HashMap<usize, i32>, loc: usize) -> Box<Iterator<Item=Vec<i32>> + 'b> {
     let adj_neighbors = get_neighbors(grid, loc).1[..4]
         .into_iter()
         .filter(|&&x| x != INVALID_POSITION)
@@ -96,4 +133,5 @@ fn get_numerical_constraint_clauses(grid: &GridData,
         .filter_map(|x| to_cnf.get(&x))
         .map(i32::clone)
         .collect::<Vec<i32>>();
+    gen.get_constraints(possible_satisfying_cnf_ids, constraint_num as u32)
 }
