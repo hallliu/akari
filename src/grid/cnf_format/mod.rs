@@ -3,6 +3,7 @@ use super::{Grid, GridData};
 use super::utils::get_neighbors;
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::vec::Vec;
 use std::iter::Map;
@@ -80,9 +81,16 @@ pub fn make_cnf_formula(grid: &GridData) -> CnfFormula {
         }
         if grid.grid.contents[grid_idx] & IS_CONSTRAINED != 0 {
             clauses.extend(get_numerical_constraint_clauses(grid, &constraint_cnf_gen, &grid_to_cnf, grid_idx));
+        } 
+        if does_need_light(grid.grid.contents[grid_idx]) {
+            clauses.push(get_sight_line_clauses(&grid, &grid_to_cnf, grid_idx));
         }
-
     }
+
+    let mut cnf_ids_within_sight = get_cnf_ids_within_sight(grid, &cnf_to_grid, &grid_to_cnf);
+    clauses.extend(
+        cnf_ids_within_sight.into_iter()
+        .map(|x| vec![-x.0, -x.1]));
 
     CnfFormula {
         grid_to_cnf_position_mapping: grid_to_cnf,
@@ -116,6 +124,38 @@ fn can_disregard(val: u8) -> bool {
         || (val & IS_SOLID == 0 && (val & IS_LIT != 0 || val & IS_LIGHT != 0))
 }
 
+fn get_cnf_ids_within_sight(grid: &GridData, cnf_to_grid: &HashMap<i32, usize>,
+                            grid_to_cnf: &HashMap<usize, i32>) -> HashSet<(i32, i32)> {
+    let mut cnf_ids_within_sight: HashSet<(i32, i32)> = HashSet::new();
+    for (cnf_idx, grid_idx) in cnf_to_grid {
+        let ref sight_line = match grid.sight_lines.get(grid_idx) {
+            Some(x) => x,
+            None => { continue; }
+        };
+        cnf_ids_within_sight.extend(
+            sight_line.iter().filter_map(|x| grid_to_cnf.get(x))
+            .filter(|&x| x > cnf_idx)
+            .cloned()
+            .map(|x| (*cnf_idx, x)));
+    }
+    cnf_ids_within_sight
+}
+
+fn get_sight_line_clauses(grid: &GridData, to_cnf: &HashMap<usize, i32>, loc: usize) -> Vec<i32> {
+    let mut result = Vec::new();
+    match to_cnf.get(&loc) {
+        Some(i) => { result.push(*i); },
+        None => { }
+    };
+
+    let ref sight_line = match grid.sight_lines.get(&loc) {
+        Some(x) => x,
+        None => { return result; }
+    };
+    result.extend(sight_line.iter().filter_map(|x| to_cnf.get(x).cloned()));
+    result
+}
+
 fn get_numerical_constraint_clauses<'a, 'b>(
     grid: &'a GridData, gen: &'b ConstraintCnfGenerator,
     to_cnf: &'a HashMap<usize, i32>, loc: usize) -> Box<Iterator<Item=Vec<i32>> + 'b> {
@@ -126,8 +166,8 @@ fn get_numerical_constraint_clauses<'a, 'b>(
         .collect::<Vec<usize>>();
 
     let num_existing_lights = adj_neighbors.iter()
-        .fold(0, |a, &x| if grid.grid.contents[x] & IS_LIT != 0 { a + 1 } else { a });
-    let constraint_num = grid.grid.contents[loc] & CONSTRAINT_NUM_MASK - num_existing_lights;
+        .fold(0, |a, &x| if grid.grid.contents[x] & IS_LIGHT != 0 { a + 1 } else { a });
+    let constraint_num = (grid.grid.contents[loc] & CONSTRAINT_NUM_MASK) - num_existing_lights;
     let possible_satisfying_cnf_ids = adj_neighbors
         .into_iter()
         .filter_map(|x| to_cnf.get(&x))

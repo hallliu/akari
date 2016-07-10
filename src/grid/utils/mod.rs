@@ -143,6 +143,8 @@ pub fn get_grid_from_string(input: &str, num_squares: i32) -> Result<Grid, Strin
             data.push(match *c {
                 b'X' => IS_SOLID,
                 b'^' => CANT_LIGHT,
+                b'*' => IS_LIGHT,
+                b'#' => IS_LIT,
                 b'0' => IS_SOLID | IS_CONSTRAINED,
                 b'1' => 1 | IS_SOLID | IS_CONSTRAINED,
                 b'2' => 2 | IS_SOLID | IS_CONSTRAINED,
