@@ -16,7 +16,6 @@ fn main() {
         if dim <= 0 {
             break;
         }
-
         
         let grid_str = read_grid_string().unwrap();
         let grid = utils::precompute_data(utils::get_grid_from_string(&grid_str, dim).unwrap());

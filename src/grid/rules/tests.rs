@@ -13,6 +13,59 @@ static TEST_GRID_STR: &'static str =
  _X___";
 
 #[test]
+fn test_populate_with_rules_1() {
+    let expected_result =
+        "#*##0
+         X1##X
+         XX#*X
+         1#*21
+         *X##*".replace(char::is_whitespace, "");
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    populate_with_rules(&mut test_grid);
+    assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
+}
+
+#[test]
+fn test_populate_with_rules_2() {
+    let test_grid_str =
+        "__X__
+         _X_X_
+         __3_X
+         _1___
+         X___X";
+    let expected_result =
+        "__X__
+         _X*X_
+         __3_X
+         _1_^_
+         X___X".replace(char::is_whitespace, "");
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    populate_with_rules(&mut test_grid);
+    println!("{}", print_grid_to_string(&test_grid.grid, true));
+    assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
+}
+
+#[test]
+fn test_populate_with_rules_3() {
+    let test_grid_str =
+        "XX___
+         _2_X_
+         1X__0
+         X1___
+         _____";
+    let expected_result =
+        "XX##*
+         *2*X#
+         1X##0
+         X1#*#
+         #*###".replace(char::is_whitespace, "");
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    populate_with_rules(&mut test_grid);
+    println!("{}", print_grid_to_string(&test_grid.grid, true));
+    assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
+}
+
+#[test]
 fn test_zero_rule() {
     let expected_result =
     "___^0

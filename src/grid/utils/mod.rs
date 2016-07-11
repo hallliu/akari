@@ -66,18 +66,19 @@ pub fn get_neighbors(grid: &GridData, loc: usize) -> ([bool; 8], [usize; 8]) {
     (is_empty, res)
 }
 
-pub fn insert_light(grid: &mut GridData, loc: usize) {
+pub fn insert_light(grid: &mut GridData, loc: usize) -> bool {
     let cannot_light = IS_SOLID | IS_LIT | CANT_LIGHT | IS_LIGHT;
     if grid.grid.contents[loc] & cannot_light != 0 {
-        return;
+        return false;
     }
     match grid.sight_lines.get(&loc) {
         Some(sl) => for lit_loc in sl.iter() {
             grid.grid.contents[*lit_loc] |= IS_LIT;
         },
-        None => {return;}
+        None => {return false;}
     }
     grid.grid.contents[loc] |= IS_LIGHT | IS_LIT;
+    true
 }
 
 pub fn precompute_data(grid: Grid) -> GridData {

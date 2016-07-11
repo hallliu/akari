@@ -31,37 +31,55 @@ static CORNER_RULE_LUT_3: [([bool; 4], [u8; 4]); 1] = [
     ([true, true, true, true], [4, 5, 6, 7])
 ];
 
-pub fn apply_constraint_rule(grid: &mut GridData, loc: usize) -> bool {
-    let (valid, positions) = get_neighbors(grid, loc);
-    let (valid_4, positions_4) = (&valid[..4], &positions[..4]);
-    let num_mask: u8 = 0x7;
-    let num_valid: u8 = valid_4.iter().fold(0, |a, &i| if i {a + 1} else {a});
-    let effective_constraint_num = grid.grid.contents[loc] & num_mask
-        - count_surrounding_lights(&grid.grid.contents, &positions);
-
-    if effective_constraint_num == 0 {
-        mark_rel_positions(grid, &[0, 1, 2, 3], &positions, CANT_LIGHT);
-        return true;
-    } else if effective_constraint_num == num_valid {
-        apply_number_light_rule(grid, valid_4, positions_4);
-        return true;
-    } else if effective_constraint_num + 1 == num_valid {
-        apply_number_corner_rule(grid, effective_constraint_num, &valid, &positions);
-        return true;
-    }
-    false 
-}
-
-fn apply_number_light_rule(grid: &mut GridData, valid: &[bool], positions: &[usize]) {
-    for (&should_consider, &position) in valid.iter().zip(positions.iter()) {
-        if should_consider {
-            insert_light(grid, position);
+pub fn populate_with_rules(grid: &mut GridData) {
+    loop {
+        let mut has_changed = false;
+        for i in 0..((grid.grid.size * grid.grid.size) as usize) {
+            let has_changed_this_iter = 
+                apply_constraint_rule(grid, i) || apply_spatial_rule(grid, i);
+            has_changed |= has_changed_this_iter;
+        }
+        if !has_changed {
+            break;
         }
     }
 }
 
+pub fn apply_constraint_rule(grid: &mut GridData, loc: usize) -> bool {
+    if grid.grid.contents[loc] & IS_CONSTRAINED == 0 {
+        return false;
+    }
+
+    let (valid, positions) = get_neighbors(grid, loc);
+    let (valid_4, positions_4) = (&valid[..4], &positions[..4]);
+    let num_mask: u8 = 0x7;
+    let num_valid: u8 = valid_4.iter().fold(0, |a, &i| if i {a + 1} else {a});
+    let effective_constraint_num = (grid.grid.contents[loc] & num_mask)
+        - count_surrounding_lights(&grid.grid.contents, &positions_4);
+
+    if effective_constraint_num == 0 {
+        return mark_rel_positions(grid, &[0, 1, 2, 3], &positions, CANT_LIGHT);
+    } else if effective_constraint_num == num_valid {
+        return apply_number_light_rule(grid, valid_4, positions_4);
+    } else if effective_constraint_num + 1 == num_valid {
+        return apply_number_corner_rule(grid, effective_constraint_num, &valid, &positions);
+    }
+    false 
+}
+
+fn apply_number_light_rule(grid: &mut GridData, valid: &[bool], positions: &[usize]) -> bool {
+    let mut has_changed = false;
+    for (&should_consider, &position) in valid.iter().zip(positions.iter()) {
+        if should_consider {
+            has_changed |= insert_light(grid, position);
+        }
+    }
+    has_changed
+}
+
 fn mark_rel_positions(grid: &mut GridData, rel_positions: &[u8],
-                      abs_positions: &[usize], mark: u8) {
+                      abs_positions: &[usize], mark: u8) -> bool {
+    let mut has_changed = false;
     for &relpos in rel_positions.iter() {
         if relpos == INVALID_RELATIVE_POSITION {
             continue;
@@ -71,26 +89,30 @@ fn mark_rel_positions(grid: &mut GridData, rel_positions: &[u8],
             continue;
         }
 
-        grid.grid.contents[ap] |= mark;
+        if grid.grid.contents[ap] & mark == 0 {
+            grid.grid.contents[ap] |= mark;
+            has_changed = true;
+        }
     }
+    has_changed
 }
 
 fn apply_number_corner_rule(grid: &mut GridData, effective_constraint_num: u8,
-                            valid: &[bool; 8], positions: &[usize; 8]) {
-    let mut apply_corner_lut = |lut: &[([bool; 4], [u8; 4])]| -> () {
+                            valid: &[bool; 8], positions: &[usize; 8]) -> bool {
+    let mut apply_corner_lut = |lut: &[([bool; 4], [u8; 4])]| -> bool {
         for &entry in lut.iter() {
             if entry.0 == &valid[..4] {
-                mark_rel_positions(grid, &entry.1, positions, CANT_LIGHT);
-                break;
+                return mark_rel_positions(grid, &entry.1, positions, CANT_LIGHT);
             }
         }
+        false
     };
 
     match effective_constraint_num {
         1 => apply_corner_lut(&CORNER_RULE_LUT_1),
         2 => apply_corner_lut(&CORNER_RULE_LUT_2),
         3 => apply_corner_lut(&CORNER_RULE_LUT_3),
-        _ => { }
+        _ => false
     }
 }
 
@@ -105,7 +127,7 @@ fn count_surrounding_lights(grid_contents: &Vec<u8>, adjacents: &[usize]) -> u8 
 }
 
 pub fn apply_spatial_rule(grid: &mut GridData, loc: usize) -> bool {
-    if grid.grid.contents[loc] & (IS_LIT | IS_LIGHT) != 0 {
+    if grid.grid.contents[loc] & (IS_SOLID | IS_LIT | IS_LIGHT) != 0 {
         return false;
     }
     let sl = match get_filtered_sight_line(grid, loc) {
@@ -113,22 +135,21 @@ pub fn apply_spatial_rule(grid: &mut GridData, loc: usize) -> bool {
         None => { return false; }
     };
     if sl.len() == 0 && grid.grid.contents[loc] & CANT_LIGHT == 0 {
-        insert_light(grid, loc);
-        return true;
+        return insert_light(grid, loc);
     } else if sl.len() == 1 && grid.grid.contents[loc] & CANT_LIGHT != 0 {
-        insert_light(grid, sl[0]);
-        return true;
+        return insert_light(grid, sl[0]);
     } else if sl.len() == 2 && grid.grid.contents[loc] & CANT_LIGHT != 0 {
         match compute_sight_corner_rule(grid, &sl, loc) {
             Some(x) => {
-                grid.grid.contents[x] |= CANT_LIGHT;
-                return true;
+                if grid.grid.contents[x] & CANT_LIGHT == 0 {
+                    grid.grid.contents[x] |= CANT_LIGHT;
+                    return true;
+                }
             },
             None => { return false; }
         }
     }
-
-    return false;
+    false
 }
 
 fn get_filtered_sight_line(grid: &GridData, loc: usize) -> Option<Vec<usize>> {

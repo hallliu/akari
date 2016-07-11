@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use std::cmp::Eq;
 use std::cmp::PartialEq;
 use std::hash::Hash;
+use std::str;
 
 static TEST_GRID_STR: &'static str = "
 ____X

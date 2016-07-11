@@ -8,6 +8,7 @@ use std::collections::VecDeque;
 use std::vec::Vec;
 use std::iter::Map;
 use std::boxed::Box;
+use std::io::{Write, Result};
 
 #[cfg(test)]
 mod tests;
@@ -19,6 +20,21 @@ pub struct CnfFormula {
     grid_to_cnf_position_mapping: HashMap<usize, i32>,
     cnf_to_grid_position_mapping: HashMap<i32, usize>,
     clauses: Vec<Vec<i32>>
+}
+
+impl CnfFormula {
+    pub fn write_to_file<T>(&self, file: &mut T) -> Result<()> where T: Write {
+        try!(write!(file, "p cnf {} {}\n",
+                    self.grid_to_cnf_position_mapping.len(),
+                    self.clauses.len()));
+        for clause in self.clauses.iter() {
+            for &num in clause.iter() {
+                try!(write!(file, "{} ", num));
+            }
+            try!(write!(file, "0\n"));
+        }
+        Ok(())
+    }
 }
 
 struct ConstraintCnfGenerator {
@@ -87,7 +103,7 @@ pub fn make_cnf_formula(grid: &GridData) -> CnfFormula {
         }
     }
 
-    let mut cnf_ids_within_sight = get_cnf_ids_within_sight(grid, &cnf_to_grid, &grid_to_cnf);
+    let cnf_ids_within_sight = get_cnf_ids_within_sight(grid, &cnf_to_grid, &grid_to_cnf);
     clauses.extend(
         cnf_ids_within_sight.into_iter()
         .map(|x| vec![-x.0, -x.1]));
