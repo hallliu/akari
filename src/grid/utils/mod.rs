@@ -138,7 +138,8 @@ pub fn get_grid_from_string(input: &str, num_squares: i32) -> Result<Grid, Strin
     let mut data: Vec<u8> = Vec::with_capacity((num_squares * num_squares) as usize);
     for grid_line in input.split_whitespace() {
         if grid_line.as_bytes().len() != num_squares as usize {
-            return Err(From::from("Input length mismatch"));
+            return Err(From::from(format!("Input length mismatch: dim is {} and got len {}",
+                                          num_squares, grid_line.as_bytes().len())));
         }
         for c in grid_line.as_bytes() {
             data.push(match *c {
@@ -156,6 +157,10 @@ pub fn get_grid_from_string(input: &str, num_squares: i32) -> Result<Grid, Strin
         }
     }
     Ok(Grid {contents: data, size: num_squares})
+}
+
+pub fn print_griddata_to_string(grid: &GridData, pretty_print: bool) -> String {
+    print_grid_to_string(&grid.grid, pretty_print)
 }
 
 pub fn print_grid_to_string(grid: &Grid, pretty_print: bool) -> String {

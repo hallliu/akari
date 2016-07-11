@@ -1,6 +1,6 @@
 use super::{IS_SOLID, IS_LIT, IS_LIGHT, CANT_LIGHT, IS_CONSTRAINED, INVALID_POSITION};
 use super::{Grid, GridData};
-use super::utils::get_neighbors;
+use super::utils::{get_neighbors, insert_light};
 
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -112,6 +112,14 @@ pub fn make_cnf_formula(grid: &GridData) -> CnfFormula {
         grid_to_cnf_position_mapping: grid_to_cnf,
         cnf_to_grid_position_mapping: cnf_to_grid,
         clauses: clauses
+    }
+}
+
+pub fn populate_grid_with_cnf(grid: &mut GridData, formula: &CnfFormula, results: Vec<i32>) {
+    for cnf_idx in results {
+        if let Some(grid_idx) = formula.cnf_to_grid_position_mapping.get(&cnf_idx) {
+            insert_light(grid, *grid_idx);
+        }
     }
 }
 
