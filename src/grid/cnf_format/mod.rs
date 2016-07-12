@@ -1,12 +1,11 @@
 use super::{IS_SOLID, IS_LIT, IS_LIGHT, CANT_LIGHT, IS_CONSTRAINED, INVALID_POSITION};
-use super::{Grid, GridData};
+use super::GridData;
 use super::utils::{get_neighbors, insert_light};
 
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::vec::Vec;
-use std::iter::Map;
 use std::boxed::Box;
 use std::io::{Write, Result};
 

@@ -1,4 +1,5 @@
 extern crate akari_solver;
+extern crate getopts;
 
 use std::io;
 use std::io::Read;
@@ -6,9 +7,10 @@ use std::fs::File;
 use std::process::Command;
 use std::env;
 
+use getopts::Options;
+
 use akari_solver::grid as solver;
 use akari_solver::grid::utils;
-use akari_solver::grid::rules;
 use akari_solver::grid::cnf_format;
 
 static CNF_OUT: &'static str = "/tmp/akari-solver-cnf-out.cnf";
@@ -16,6 +18,22 @@ static RESULT_IN: &'static str = "/tmp/akari-solver-result-in.cnf";
 static SAT_SOLVER_ENV_NAME: &'static str = "SAT_SOLVER";
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    let mut options = Options::new();
+
+    options.optflag("p", "pretty-print", "Pretty-print the solution");
+    options.optflag("h", "help", "Print the usage");
+    let matches = match options.parse(&args[1..]) {
+        Ok(x) => x,
+        Err(y) => { panic!(y.to_string()) }
+    };
+    if matches.opt_present("h") {
+        print_usage(&args[0], &options);
+        return;
+    }
+
+    let pretty_print = matches.opt_present("p");
+
     let grid_str = read_grid_string().unwrap();
     let dim = (grid_str.len() as f64).sqrt() as i32;
     if dim * dim != grid_str.replace(char::is_whitespace, "").len() as i32 {
@@ -23,18 +41,46 @@ fn main() {
         return;
     }
     let mut grid = utils::precompute_data(utils::get_grid_from_string(&grid_str, dim).unwrap());
-    let (_, is_uniq) = solver::solve_puzzle(&mut grid, solve_sat_with_glucose).unwrap();
-    println!("{}", utils::print_griddata_to_string(&grid, true));
-    println!("Unique solution: {}", is_uniq);
+    let (light_locs, is_uniq) = solver::solve_puzzle(&mut grid, solve_sat_with_glucose).unwrap();
+    if pretty_print {
+        println!("{}", utils::print_griddata_to_string(&grid, true));
+        println!("Unique solution: {}", is_uniq);
+    }
+    else {
+        for loc in light_locs {
+            print!("{} ", loc);
+        }
+        println!("");
+        println!("{}", if is_uniq { 1 } else { 0 });
+    }
 }
 
-fn read_int_line() -> Result<i32, String> {
-    let mut line = String::new();
+fn print_usage(progname: &str, opts: &Options) {
+    let desc = format!("\
+    Usage: {} [-p|--pretty-print]
 
-    try!(io::stdin().read_line(&mut line).map_err(|e| e.to_string()));
-    let res = try!(line.trim().parse::<i32>().map_err(|e| e.to_string()));
-    Ok(res)
+    Takes a puzzle to solve from standard input, solves it, and outputs the solution.
+    Input format is a string, where each non-whitespace character corresponds to a
+    square on the grid in row-major order. Input puzzles must be square. The meaning
+    of characters is as follows:
+    X -- Solid block
+    _ -- Empty block
+    0, 1, 2, 3, 4 -- Solid blocks that carry a surrounding lights constraint
+
+    Output will be produced on standard out.
+    If --pretty-print is not specified, output will be a list of indices that contain
+    lights, again in row-major order, followed by a newline, followed by 1 if the
+    solution is unique, and 0 otherwise.
+
+    If --pretty print is specified, output will be a formatted grid that contains a
+    solution, formatted the same, but with the following possible characters:
+    * -- Square that contains a light
+    # -- Square that has been lit\
+    ", progname);
+
+    print!("{}", opts.usage(&desc));
 }
+
 
 fn read_grid_string() -> Result<String, String> {
     let mut grid_raw = String::new();
