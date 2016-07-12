@@ -35,6 +35,17 @@ impl CnfFormula {
         }
         Ok(())
     }
+
+    pub fn append_inverse(&self, result: &Vec<i32>) -> CnfFormula {
+        let clause_to_insert = result.iter().map(|&x| -x).collect();
+        let mut result_clauses = self.clauses.clone();
+        result_clauses.push(clause_to_insert);
+        CnfFormula {
+            grid_to_cnf_position_mapping: self.grid_to_cnf_position_mapping.clone(),
+            cnf_to_grid_position_mapping: self.cnf_to_grid_position_mapping.clone(),
+            clauses: result_clauses
+        }
+    }
 }
 
 struct ConstraintCnfGenerator {
@@ -117,6 +128,9 @@ pub fn make_cnf_formula(grid: &GridData) -> CnfFormula {
 
 pub fn populate_grid_with_cnf(grid: &mut GridData, formula: &CnfFormula, results: Vec<i32>) {
     for cnf_idx in results {
+        if cnf_idx <= 0 {
+            continue;
+        }
         if let Some(grid_idx) = formula.cnf_to_grid_position_mapping.get(&cnf_idx) {
             insert_light(grid, *grid_idx);
         }
