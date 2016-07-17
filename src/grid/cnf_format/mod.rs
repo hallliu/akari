@@ -101,7 +101,7 @@ pub fn make_cnf_formula(grid: &GridData) -> CnfFormula {
     let constraint_cnf_gen = make_constraint_cnf_generator(4);
 
     sorted_cnf_ids.sort();
-    for grid_idx in 0..((grid.grid.size * grid.grid.size) as usize) {
+    for grid_idx in 0..((grid.grid.height * grid.grid.width) as usize) {
         if can_disregard(grid.grid.contents[grid_idx]) {
             continue;
         }

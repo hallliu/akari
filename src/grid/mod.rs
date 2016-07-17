@@ -15,7 +15,8 @@ const INVALID_POSITION: usize = usize::MAX;
 
 pub struct Grid {
     contents: Vec<u8>,
-    size: i32 
+    width: i32,
+    height: i32,
 }
 
 pub struct GridData {
@@ -43,7 +44,7 @@ pub fn solve_puzzle(grid: &mut GridData, solver: SatSolver) -> Result<(Vec<usize
     };
     cnf_format::populate_grid_with_cnf(grid, &cnf_formula, solver_result);
 
-    let lit_locs = (0..((grid.grid.size * grid.grid.size) as usize))
+    let lit_locs = (0..((grid.grid.height * grid.grid.width) as usize))
         .filter(|&x| (grid.grid.contents[x] & IS_LIGHT) != 0)
         .collect();
     Ok((lit_locs, is_unique))

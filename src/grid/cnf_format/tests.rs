@@ -109,7 +109,7 @@ fn test_get_numerical_constraint_1() {
         "__X
          _2*
          __#";
-    let grid = precompute_data(get_grid_from_string(test_grid, 3).unwrap());
+    let grid = precompute_data(get_grid_from_string(test_grid, 3, 3).unwrap());
     let gen = make_constraint_cnf_generator(4);
     let to_cnf = super::produce_variable_mapping(&grid).0;
     let collected_clauses =
@@ -131,7 +131,7 @@ fn test_get_numerical_constraint_2() {
          ___
          XXX";
 
-    let grid = precompute_data(get_grid_from_string(test_grid, 3).unwrap());
+    let grid = precompute_data(get_grid_from_string(test_grid, 3, 3).unwrap());
     let gen = make_constraint_cnf_generator(4);
     let to_cnf = super::produce_variable_mapping(&grid).0;
     let collected_clauses =
@@ -155,7 +155,7 @@ fn test_sight_line_clause() {
          __#X
          X_#^";
 
-    let grid = precompute_data(get_grid_from_string(test_grid, 4).unwrap());
+    let grid = precompute_data(get_grid_from_string(test_grid, 4, 4).unwrap());
     let to_cnf = super::produce_variable_mapping(&grid).0;
 
     let sight_line_clause_1: HashSet<i32> =
@@ -177,7 +177,7 @@ fn test_get_cnf_ids_within_sight() {
          _X*X
          __#X
          X_#^";
-    let grid = precompute_data(get_grid_from_string(test_grid, 4).unwrap());
+    let grid = precompute_data(get_grid_from_string(test_grid, 4, 4).unwrap());
     let (to_cnf, to_grid) = super::produce_variable_mapping(&grid);
     let result = super::get_cnf_ids_within_sight(&grid, &to_grid, &to_cnf);
     let expected_result = vec![(1, 2), (1, 4), (1, 5), (4, 5), (5, 6), (6, 7)]

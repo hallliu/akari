@@ -20,7 +20,7 @@ fn test_populate_with_rules_1() {
          XX#*X
          1#*21
          *X##*".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
     populate_with_rules(&mut test_grid);
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
 }
@@ -39,7 +39,7 @@ fn test_populate_with_rules_2() {
          __3_X
          _1_^_
          X___X".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5, 5).unwrap());
     populate_with_rules(&mut test_grid);
     println!("{}", print_grid_to_string(&test_grid.grid, true));
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -59,7 +59,7 @@ fn test_populate_with_rules_3() {
          1X##0
          X1#*#
          #*###".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5, 5).unwrap());
     populate_with_rules(&mut test_grid);
     println!("{}", print_grid_to_string(&test_grid.grid, true));
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -73,7 +73,7 @@ fn test_zero_rule() {
      XX__X
      1__21
      _X___".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
 
     apply_constraint_rule(&mut test_grid, 4);
 
@@ -89,7 +89,7 @@ fn test_number_light_rule() {
      1__21
      _X##*".replace(char::is_whitespace, "");
 
-    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
     apply_constraint_rule(&mut test_grid, 19);
 
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -104,7 +104,7 @@ fn test_number_light_rule_multi() {
      1#*21
      *X##*".replace(char::is_whitespace, "");
 
-    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
     apply_constraint_rule(&mut test_grid, 19);
     apply_constraint_rule(&mut test_grid, 18);
     apply_constraint_rule(&mut test_grid, 6);
@@ -122,7 +122,7 @@ fn test_number_corner_rule_1() {
      1__21
      _X^__".replace(char::is_whitespace, "");
 
-    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
     apply_constraint_rule(&mut test_grid, 18);
     apply_constraint_rule(&mut test_grid, 6);
 
@@ -144,7 +144,7 @@ fn test_number_corner_rule_2() {
      _^_X_
      _____".replace(char::is_whitespace, "");
 
-    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5, 5).unwrap());
     apply_constraint_rule(&mut test_grid, 12);
 
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -158,7 +158,7 @@ fn test_isolated_square_1() {
      XX__X
      1__21
      *X___".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
     apply_spatial_rule(&mut test_grid, 20);
 
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -179,7 +179,7 @@ fn test_isolated_square_2() {
      XX__X
      1__21
      _X___".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5, 5).unwrap());
     apply_spatial_rule(&mut test_grid, 0);
 
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -200,7 +200,7 @@ fn test_spatial_corner_rule_1() {
      XX_^X
      1__21
      _X___".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5, 5).unwrap());
     apply_spatial_rule(&mut test_grid, 13);
 
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -221,7 +221,7 @@ fn test_spatial_corner_rule_2() {
      XX_^X
      1__21
      _X___".replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5, 5).unwrap());
     apply_spatial_rule(&mut test_grid, 13);
 
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));
@@ -237,7 +237,7 @@ fn test_spatial_corner_rule_negative() {
      _X___";
 
     let expected_result = test_grid_str.replace(char::is_whitespace, "");
-    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(test_grid_str, 5, 5).unwrap());
     apply_spatial_rule(&mut test_grid, 13);
 
     assert_eq!(&expected_result, &print_grid_to_string(&test_grid.grid, false));

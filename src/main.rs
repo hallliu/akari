@@ -34,13 +34,10 @@ fn main() {
 
     let pretty_print = matches.opt_present("p");
 
+    let (height, width) = read_grid_dims().unwrap();
     let grid_str = read_grid_string().unwrap();
-    let dim = (grid_str.len() as f64).sqrt() as i32;
-    if dim * dim != grid_str.replace(char::is_whitespace, "").len() as i32 {
-        println!("Error: Grid is non-square.");
-        return;
-    }
-    let mut grid = utils::precompute_data(utils::get_grid_from_string(&grid_str, dim).unwrap());
+
+    let mut grid = utils::precompute_data(utils::get_grid_from_string(&grid_str, height, width).unwrap());
     let (light_locs, is_uniq) = solver::solve_puzzle(&mut grid, solve_sat_with_glucose).unwrap();
     if pretty_print {
         println!("{}", utils::print_griddata_to_string(&grid, true));
@@ -60,9 +57,11 @@ fn print_usage(progname: &str, opts: &Options) {
     Usage: {} [-p|--pretty-print]
 
     Takes a puzzle to solve from standard input, solves it, and outputs the solution.
-    Input format is a string, where each non-whitespace character corresponds to a
-    square on the grid in row-major order. Input puzzles must be square. The meaning
-    of characters is as follows:
+    Input format: First line consists of two numbers separated by a space,
+    corresponding to the height and width of the puzzle, respectively.
+    Subsequent lines are interpreted as a string, where each non-whitespace character
+    corresponds to a square on the grid in row-major order. The meaning of characters
+    is as follows:
     X -- Solid block
     _ -- Empty block
     0, 1, 2, 3, 4 -- Solid blocks that carry a surrounding lights constraint
@@ -81,6 +80,18 @@ fn print_usage(progname: &str, opts: &Options) {
     print!("{}", opts.usage(&desc));
 }
 
+fn read_grid_dims() -> Result<(i32, i32), String> {
+    let mut input_line = String::new();
+    try!(io::stdin().read_line(&mut input_line).map_err(|e| e.to_string()));
+    let maybe_dims = input_line.split_whitespace()
+        .map(|x| x.parse::<i32>())
+        .collect::<Result<Vec<_>, _>>();
+    let dims = try!(maybe_dims.map_err(|e| e.to_string()));
+    if dims.len() != 2 {
+        return Err(format!("Found {} dimensions instead of 2.", dims.len()));
+    }
+    Ok((dims[0], dims[1]))
+}
 
 fn read_grid_string() -> Result<String, String> {
     let mut grid_raw = String::new();

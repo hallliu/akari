@@ -34,7 +34,7 @@ static CORNER_RULE_LUT_3: [([bool; 4], [u8; 4]); 1] = [
 pub fn populate_with_rules(grid: &mut GridData) {
     loop {
         let mut has_changed = false;
-        for i in 0..((grid.grid.size * grid.grid.size) as usize) {
+        for i in 0..((grid.grid.height * grid.grid.width) as usize) {
             let has_changed_this_iter = 
                 apply_constraint_rule(grid, i) || apply_spatial_rule(grid, i);
             has_changed |= has_changed_this_iter;
@@ -169,8 +169,8 @@ fn compute_sight_corner_rule(grid: &GridData, valid_sl: &Vec<usize>, loc: usize)
     }
     let diff0 = valid_sl[0] as i32 - loc as i32;
     let diff1 = valid_sl[1] as i32 - loc as i32;
-    if (diff0.abs() < grid.grid.size && diff1.abs() < grid.grid.size) ||
-        (diff0.abs() % grid.grid.size == 0 && diff1.abs() % grid.grid.size == 0) {
+    if (diff0.abs() < grid.grid.width && diff1.abs() < grid.grid.width) ||
+        (diff0.abs() % grid.grid.width == 0 && diff1.abs() % grid.grid.width == 0) {
         return None;
     }
     let potential_mark = (loc as i32 + diff0 + diff1) as usize;

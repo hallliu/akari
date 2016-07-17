@@ -11,7 +11,7 @@ _X___";
 
 #[test]
 fn test_get_adj_empties() {
-    let test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
     let mut cases = HashMap::new();
     let ip = super::super::INVALID_POSITION;
     cases.insert(0, ([false, true, false, false, false, false, false, false],
@@ -40,14 +40,14 @@ fn test_light_square() {
         X__21
         _X___".replace(char::is_whitespace, "");
 
-    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5).unwrap());
+    let mut test_grid = precompute_data(get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap());
     insert_light(&mut test_grid, 8);
     assert_eq!(&expected_result_grid, &print_grid_to_string(&test_grid.grid, false));
 }
 
 #[test]
 fn test_print_write_grid() {
-    let test_grid = get_grid_from_string(TEST_GRID_STR, 5).unwrap();
+    let test_grid = get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap();
     let result_str = print_grid_to_string(&test_grid, false);
     let expected = TEST_GRID_STR.replace(char::is_whitespace, "");
     assert_eq!(&expected, &result_str);
@@ -55,7 +55,7 @@ fn test_print_write_grid() {
 
 #[test]
 fn test_sight_line() {
-    let test_grid_1 = get_grid_from_string(TEST_GRID_STR, 5).unwrap();
+    let test_grid_1 = get_grid_from_string(TEST_GRID_STR, 5, 5).unwrap();
 
     let test_locations = vec!(0, 1, 8, 20);
     let expected_sight_lines: Vec<HashSet<usize>> = vec!(
