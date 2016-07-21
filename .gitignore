@@ -1,6 +1,6 @@
 target/
 glucose-syrup/*
-glucose
+bin/
 Cargo.lock
 *.swp
 *.swo

@@ -21,7 +21,8 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     let mut options = Options::new();
 
-    options.optflag("p", "pretty-print", "Pretty-print the solution");
+    options.optflag("p", "pretty-print", "Pretty-print the solution.");
+    options.optflag("u", "unique-only", "Only print whether the solution is unique.");
     options.optflag("h", "help", "Print the usage");
     let matches = match options.parse(&args[1..]) {
         Ok(x) => x,
@@ -33,6 +34,7 @@ fn main() {
     }
 
     let pretty_print = matches.opt_present("p");
+    let unique_only = matches.opt_present("u");
 
     let (height, width) = read_grid_dims().unwrap();
     let grid_str = read_grid_string().unwrap();
@@ -44,10 +46,12 @@ fn main() {
         println!("Unique solution: {}", is_uniq);
     }
     else {
-        for loc in light_locs {
-            print!("{} ", loc);
+        if !unique_only {
+            for loc in light_locs {
+                print!("{} ", loc);
+            }
+            println!("");
         }
-        println!("");
         println!("{}", if is_uniq { 1 } else { 0 });
     }
 }
