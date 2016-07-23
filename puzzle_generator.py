@@ -189,8 +189,8 @@ def call_solver_for_uniqueness(grid):
 def main():
     best_grid = None
     best_ratio = 1
-    for i in range(20):
-        g1 = Grid(25, 25, 0.4)
+    for i in range(40):
+        g1 = Grid(25, 25, 0.3)
         g1.populate_with_lights()
         g1.search_constraints(call_solver_for_uniqueness)
 
