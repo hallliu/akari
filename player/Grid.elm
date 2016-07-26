@@ -47,7 +47,7 @@ moveFromLocation (y, x) h w d = case d of
 type alias Cell = {
     location: Location,
     contents: CellContents,
-    litCount: Int
+    litCount: Int,
     up_nbr: Maybe Location,
     down_nbr: Maybe Location,
     left_nbr: Maybe Location,
@@ -123,8 +123,8 @@ getSightLine grid cell =
     in
         List.concat <| List.map getSightLineInDirection directions
 
-markCellAsLit: Cell -> Cell
-markCellAsLit cell =
+castLightOnCell: Cell -> Cell
+castLightOnCell cell =
     let newContents = case cell.contents of
         Empty -> Lit
         Lit -> Lit
@@ -136,6 +136,35 @@ markCellAsLit cell =
         Constraint x -> Constraint x
     in
         {cell | litCount = cell.litCount + 1, contents = newContents}
+
+uncastLightOnCell: Cell -> Cell
+uncastLightOnCell cell =
+    let 
+        onlyLitOnce = cell.litCount == 1
+        newLitCount = min 0 (cell.litCount - 1)
+        newContents = case cell.contents of
+            Empty -> Empty
+            Lit ->
+                if onlyLitOnce then
+                    Empty
+                else
+                    Lit
+            CantLight -> CantLight
+            LitAndCantLight -> 
+                if onlyLitOnce then
+                    CantLight
+                else
+                    LitAndCantLight
+            Light -> Light
+            BadLight ->
+                if onlyLitOnce then
+                    Light
+                else
+                    BadLight
+            Solid -> Solid
+            Constraint x -> Constraint x
+    in
+        {cell | litCount = newLitCount, contents = newContents}
 
 markCellAsLight: Cell -> Maybe Cell
 markCellAsLight cell =
@@ -149,18 +178,57 @@ markCellAsLight cell =
         Solid -> Nothing
         Constraint _ -> Nothing
     in case newContents of
-        Just x -> {cell | contents = x}
+        Just x -> Just {cell | contents = x}
         Nothing -> Nothing
 
-putLight: Grid -> Location -> Grid
-putLight grid loc =
-    let 
-        newAtLoc = Maybe.andThen (Dict.get grid.cells loc) markCellAsLight
-        sightLine = case newAtLoc of
-            Just c -> getSightLine grid c
-            Nothing -> Nothing
-        newCells = Maybe.map (List.map markCellAsLit) sightLine
+unmarkCellAsLight: Cell -> Maybe Cell
+unmarkCellAsLight cell =
+    let newContents = case cell.contents of
+        Empty -> Nothing
+        Lit -> Nothing
+        CantLight -> Nothing
+        LitAndCantLight -> Nothing
+        Light ->
+            if cell.litCount > 0 then
+                Just Lit
+            else
+                Just Empty
+        BadLight -> Just Lit
+        Solid -> Nothing
+        Constraint _ -> Nothing
+    in case newContents of
+        Just x -> Just {cell | contents = x}
+        Nothing -> Nothing
 
+replaceCellsInGrid: Grid -> List Cell -> Grid
+replaceCellsInGrid grid newCells =
+    let
+        putCellInDict: Cell -> Dict Location Cell -> Dict Location Cell
+        putCellInDict cell dict = Dict.insert cell.location cell dict
+
+        newGridDict = List.foldr putCellInDict grid.cells newCells
+    in
+        {grid | cells = newGridDict}
+
+lightToggleHelper: (Cell -> Maybe Cell) -> (Cell -> Cell) -> Location -> Grid -> Grid
+lightToggleHelper locMarker sightMarker loc grid =
+    let 
+        newAtLoc = Maybe.andThen (Dict.get loc grid.cells) locMarker
+        sightLine = case newAtLoc of
+            Just c -> Just <| getSightLine grid c
+            Nothing -> Nothing
+        newSightLineCells = Maybe.map (List.map sightMarker) sightLine
+        allNewCells = Maybe.map2 (::) newAtLoc newSightLineCells
+    in
+        case allNewCells of
+            Just nc -> replaceCellsInGrid grid nc
+            Nothing -> grid
+
+putLight: Location -> Grid -> Grid
+putLight = lightToggleHelper markCellAsLight castLightOnCell
+
+removeLight: Location -> Grid -> Grid
+removeLight = lightToggleHelper unmarkCellAsLight uncastLightOnCell
 
 gridToString: Grid -> String
 gridToString grid =
@@ -199,3 +267,4 @@ getCellContents c = case c of
     '4' -> Constraint 4
     _ -> Empty
 
+testgrid = populateWithNeighbors <| makeGrid 3 2 ['_', '_', '_', '_', '_', '_']
