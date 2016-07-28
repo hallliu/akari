@@ -141,7 +141,7 @@ uncastLightOnCell: Cell -> Cell
 uncastLightOnCell cell =
     let 
         onlyLitOnce = cell.litCount == 1
-        newLitCount = min 0 (cell.litCount - 1)
+        newLitCount = max 0 (cell.litCount - 1)
         newContents = case cell.contents of
             Empty -> Empty
             Lit ->
@@ -200,6 +200,26 @@ unmarkCellAsLight cell =
         Just x -> Just {cell | contents = x}
         Nothing -> Nothing
 
+markCellAsCantLight: Cell -> (Cell, Bool)
+markCellAsCantLight cell = 
+    let newContents = case cell.contents of
+            Empty -> CantLight
+            Lit -> LitAndCantLight
+            CantLight -> Empty
+            LitAndCantLight -> Lit
+            Light -> Light
+            BadLight -> BadLight
+            Solid -> Solid
+            Constraint x -> Constraint x
+    in
+        ({cell | contents = newContents}, isCellLight cell)
+
+isCellLight: Cell -> Bool
+isCellLight cell = case cell.contents of
+    Light -> True
+    BadLight -> True
+    _ -> False
+
 replaceCellsInGrid: Grid -> List Cell -> Grid
 replaceCellsInGrid grid newCells =
     let
@@ -229,6 +249,29 @@ putLight = lightToggleHelper markCellAsLight castLightOnCell
 
 removeLight: Location -> Grid -> Grid
 removeLight = lightToggleHelper unmarkCellAsLight uncastLightOnCell
+
+toggleLight: Location -> Grid -> Grid
+toggleLight loc grid = case Dict.get loc grid.cells of
+    Nothing -> grid
+    Just cell -> 
+        if isCellLight cell then
+            removeLight loc grid
+        else
+            putLight loc grid
+
+toggleCantLight: Location -> Grid -> Grid
+toggleCantLight loc grid =
+    let
+        markedCell: Maybe (Cell, Bool)
+        markedCell = Maybe.map markCellAsCantLight <| Dict.get loc grid.cells
+    in
+        case markedCell of
+            Nothing -> grid
+            Just (newCell, doRemoveLightFirst) ->
+                if doRemoveLightFirst then
+                    toggleCantLight loc <| removeLight loc grid
+                else
+                    replaceCellsInGrid grid [newCell]
 
 gridToString: Grid -> String
 gridToString grid =
@@ -267,4 +310,7 @@ getCellContents c = case c of
     '4' -> Constraint 4
     _ -> Empty
 
-testgrid = populateWithNeighbors <| makeGrid 3 2 ['_', '_', '_', '_', '_', '_']
+makeGridFromString: Int -> Int -> String -> Grid
+makeGridFromString height width data =
+    populateWithNeighbors <| makeGrid height width <| String.toList data
+testgrid = makeGridFromString 3 2 "______"
