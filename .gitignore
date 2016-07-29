@@ -3,5 +3,6 @@ glucose-syrup/*
 bin/
 Cargo.lock
 elm-stuff/
+player/*.js
 *.swp
 *.swo

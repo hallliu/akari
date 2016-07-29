@@ -1,0 +1,46 @@
+.grid-square {
+    width: 20px;
+    height: 20px;
+    border: 1px solid;
+    margin: 0;
+    padding: 0;
+}
+
+.lit {
+    background-color: yellow;
+}
+
+.light::before {
+    content: "!";
+}
+
+.cant-light::before {
+    content: "x";
+}
+
+.bad-light::before {
+    content: "!";
+    color: red;
+}
+
+.solid {
+    background-color: #000000;
+}
+
+.constrained {
+    background-color: #000011;
+    color: #ffffff;
+}
+
+.grid-row {
+    display: flex;
+    flex-direction: row;
+    width: auto;
+    height: 20px;
+}
+
+.grid-whole {
+    display: flex;
+    flex-direction: column;
+}
+

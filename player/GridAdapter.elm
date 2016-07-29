@@ -27,15 +27,26 @@ getDecoder loc =
         Json.andThen ("button" := Json.int) getMessage
 
 getClassesForCellContents: CellContents -> List (Attribute Msg)
-getClassesForCellContents contents = case contents of
-    Empty -> []
-    Lit -> [Attr.class "lit"]
-    Light -> [Attr.class "lit", Attr.class "light"]
-    CantLight -> [Attr.class "cant-light"]
-    LitAndCantLight -> [Attr.class "lit", Attr.class "cant-light"]
-    BadLight -> [Attr.class "lit", Attr.class "bad-light"]
-    Solid -> [Attr.class "solid"]
-    Constraint _ -> [Attr.class "constrained"]
+getClassesForCellContents contents =
+    let 
+        getSpecialClasses: CellContents -> List String
+        getSpecialClasses c = case c of
+            Empty -> []
+            Lit -> ["lit"]
+            Light -> ["lit", "light"]
+            CantLight -> ["cant-light"]
+            LitAndCantLight -> ["lit", "cant-light"]
+            BadLight -> [ "lit", "bad-light"]
+            Solid -> ["solid"]
+            Constraint _ -> ["constrained"]
+
+        getAllClasses: CellContents -> List String
+        getAllClasses c = (::) "grid-square" <| getSpecialClasses c
+
+        toAttrs: List String -> List (Attribute Msg)
+        toAttrs classes = [Attr.classList <| List.map (\x -> (x, True)) classes]
+    in
+        toAttrs <| getAllClasses contents
 
 getActionsForCell: Cell -> List (Attribute Msg)
 getActionsForCell cell = case cell.contents of

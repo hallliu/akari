@@ -312,5 +312,19 @@ getCellContents c = case c of
 
 makeGridFromString: Int -> Int -> String -> Grid
 makeGridFromString height width data =
-    populateWithNeighbors <| makeGrid height width <| String.toList data
+    let 
+        isValidChar: Char -> Bool
+        isValidChar c =
+            (c == '_')
+            || (c == 'X')
+            || (c == '0')
+            || (c == '1')
+            || (c == '2')
+            || (c == '3')
+            || (c == '4')
+
+        trimmedData = String.filter isValidChar data
+    in
+        populateWithNeighbors <| makeGrid height width <| String.toList trimmedData
+
 testgrid = makeGridFromString 3 2 "______"
