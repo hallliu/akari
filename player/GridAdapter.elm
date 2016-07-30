@@ -2,7 +2,7 @@
 module GridAdapter exposing (..)
 
 import Grid exposing (..)
-import Html exposing (Html, Attribute, div, text)
+import Html exposing (Html, Attribute, div, text, span)
 import Html.Attributes as Attr
 import Html.Events as Events
 import Dict
@@ -66,7 +66,7 @@ getTextForCellContents contents = case contents of
 
 cellToHtml: Cell -> Html Msg
 cellToHtml cell = div ((getClassesForCellContents cell.contents) ++ (getActionsForCell cell))
-    (getTextForCellContents cell.contents)
+    [span [] (getTextForCellContents cell.contents)]
 
 gridRowToHtml: Grid -> Int -> Html Msg
 gridRowToHtml grid rowNum =

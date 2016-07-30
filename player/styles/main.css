@@ -1,4 +1,8 @@
 .grid-square {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: default;
     width: 20px;
     height: 20px;
     border-right: 1px solid #000000;
@@ -15,15 +19,16 @@
 }
 
 .light::before {
-    content: "!";
+    content: "☼";
 }
 
 .cant-light::before {
-    content: "x";
+    content: "×";
+    color: red;
 }
 
 .bad-light::before {
-    content: "!";
+    content: "☼";
     color: red;
 }
 
