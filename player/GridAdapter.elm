@@ -19,8 +19,6 @@ getDecoder loc =
         getMessage mouseNumber =
             if mouseNumber == 0 then
                 Json.succeed <| ToggleLight loc
-            else if mouseNumber == 2 then
-                Json.succeed <| ToggleCantLight loc
             else
                 Json.succeed <| NoAction
     in
@@ -49,10 +47,17 @@ getClassesForCellContents contents =
         toAttrs <| getAllClasses contents
 
 getActionsForCell: Cell -> List (Attribute Msg)
-getActionsForCell cell = case cell.contents of
-    Solid -> []
-    Constraint _ -> []
-    _ -> [Events.on "click" <| getDecoder cell.location]
+getActionsForCell cell = 
+    let
+        options = {stopPropagation = False, preventDefault = True}
+        disableContextMenuHelper = Events.onWithOptions "contextmenu" options
+        disableContextMenu = disableContextMenuHelper <| Json.succeed NoAction
+        handleRightClick = disableContextMenuHelper (Json.succeed (ToggleCantLight cell.location))
+
+    in case cell.contents of
+        Solid -> [disableContextMenu]
+        Constraint _ -> [disableContextMenu]
+        _ -> [handleRightClick, Events.on "click" <| getDecoder cell.location]
 
 getTextForCellContents: CellContents -> List (Html Msg)
 getTextForCellContents contents = case contents of
