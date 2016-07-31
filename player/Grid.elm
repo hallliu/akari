@@ -55,6 +55,7 @@ type alias Cell = {
 }
 
 type alias Grid = {
+    initialState: Dict Location Cell,
     cells: Dict Location Cell,
     height: Int,
     width: Int
@@ -92,14 +93,14 @@ populateWithNeighbors grid =
     let
         newCells = Dict.map (\_ c -> putNeighborsInCell c grid) grid.cells
     in
-        {grid | cells = newCells}
+        {grid | initialState = newCells, cells = newCells}
 
 makeGrid: Int -> Int -> List Char -> Grid
 makeGrid height width data = 
     let 
         g = Dict.fromList <| List.map2 makeCell (listProduct [0..height - 1] [0..width - 1]) data
     in
-        populateWithNeighbors {cells = g, height = height, width = width}
+        populateWithNeighbors {initialState = g, cells = g, height = height, width = width}
 
 getSightLine: Grid -> Cell -> List Cell
 getSightLine grid cell =
@@ -272,6 +273,9 @@ toggleCantLight loc grid =
                     toggleCantLight loc <| removeLight loc grid
                 else
                     replaceCellsInGrid grid [newCell]
+
+reset: Grid -> Grid
+reset grid = {grid | cells = grid.initialState}
 
 gridToString: Grid -> String
 gridToString grid =

@@ -1,60 +1,22 @@
-.grid-square {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: default;
-    width: 20px;
-    height: 20px;
-    border-right: 1px solid #000000;
-    margin: 0;
-    padding: 0;
-}
+#puzzle-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 
-.grid-square:first-child {
-    border-left: 1px solid #000000;
-}
-
-.lit {
-    background-color: yellow;
-}
-
-.light::before {
-    content: "☼";
-}
-
-.cant-light::before {
-    content: "×";
-    color: red;
-}
-
-.bad-light::before {
-    content: "☼";
-    color: red;
-}
-
-.solid {
-    background-color: #000000;
-}
-
-.constrained {
-    background-color: #000011;
-    color: #ffffff;
-}
-
-.grid-row {
-    display: flex;
-    flex-direction: row;
-    border-bottom: 1px solid #000000;
-    height: 20px;
-}
-
-.grid-row:first-child {
-    border-top: 1px solid #000000;
-}
-
-.grid-whole {
     display: flex;
     flex-direction: column;
-    float: left;
+    align-items: center;
+    justify-content: space-around;
 }
 
+#button-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+}
+
+button {
+    margin-left: 3px;
+    margin-right: 3px;
+}

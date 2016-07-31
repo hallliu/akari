@@ -8,14 +8,15 @@ import Html.Events as Events
 import Dict
 import Json.Decode as Json exposing (Decoder, (:=))
 
-type Msg = ToggleLight Location
+type GridAction = ToggleLight Location
     | ToggleCantLight Location
+    | Reset
     | NoAction
 
-getDecoder: Location -> Decoder Msg
+getDecoder: Location -> Decoder GridAction
 getDecoder loc = 
     let
-        getMessage: Int -> Decoder Msg
+        getMessage: Int -> Decoder GridAction
         getMessage mouseNumber =
             if mouseNumber == 0 then
                 Json.succeed <| ToggleLight loc
@@ -24,7 +25,7 @@ getDecoder loc =
     in
         Json.andThen ("button" := Json.int) getMessage
 
-getClassesForCellContents: CellContents -> List (Attribute Msg)
+getClassesForCellContents: CellContents -> List (Attribute GridAction)
 getClassesForCellContents contents =
     let 
         getSpecialClasses: CellContents -> List String
@@ -41,12 +42,12 @@ getClassesForCellContents contents =
         getAllClasses: CellContents -> List String
         getAllClasses c = (::) "grid-square" <| getSpecialClasses c
 
-        toAttrs: List String -> List (Attribute Msg)
+        toAttrs: List String -> List (Attribute GridAction)
         toAttrs classes = [Attr.classList <| List.map (\x -> (x, True)) classes]
     in
         toAttrs <| getAllClasses contents
 
-getActionsForCell: Cell -> List (Attribute Msg)
+getActionsForCell: Cell -> List (Attribute GridAction)
 getActionsForCell cell = 
     let
         options = {stopPropagation = False, preventDefault = True}
@@ -59,16 +60,16 @@ getActionsForCell cell =
         Constraint _ -> [disableContextMenu]
         _ -> [handleRightClick, Events.on "click" <| getDecoder cell.location]
 
-getTextForCellContents: CellContents -> List (Html Msg)
+getTextForCellContents: CellContents -> List (Html GridAction)
 getTextForCellContents contents = case contents of
     Constraint x -> [text <| toString x]
     _ -> []
 
-cellToHtml: Cell -> Html Msg
+cellToHtml: Cell -> Html GridAction
 cellToHtml cell = div ((getClassesForCellContents cell.contents) ++ (getActionsForCell cell))
-    [span [] (getTextForCellContents cell.contents)]
+    (getTextForCellContents cell.contents)
 
-gridRowToHtml: Grid -> Int -> Html Msg
+gridRowToHtml: Grid -> Int -> Html GridAction
 gridRowToHtml grid rowNum =
     let
         getCellInRow: Int -> Maybe Cell
@@ -77,11 +78,11 @@ gridRowToHtml grid rowNum =
         cells: List Cell
         cells = List.filterMap identity <| List.map getCellInRow [0..grid.width - 1]
 
-        cellHtml: List (Html Msg)
+        cellHtml: List (Html GridAction)
         cellHtml = List.map cellToHtml cells
     in
         div [Attr.class "grid-row"] cellHtml
 
-gridToHtml: Grid -> Html Msg
+gridToHtml: Grid -> Html GridAction
 gridToHtml grid =
     div [Attr.class "grid-whole"] <| List.map (gridRowToHtml grid) [0..grid.height - 1]

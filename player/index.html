@@ -3,13 +3,14 @@
     <head>
         <title>Akari</title>
         <meta charset="UTF-8">
+        <link rel="stylesheet" type="text/css" href="styles/grid.css"/>
         <link rel="stylesheet" type="text/css" href="styles/main.css"/>
     </head>
     <body>
         <script src="akari.js"></script>
-        <div id="elm-container"></div>
+        <div id="puzzle-container"></div>
         <script>
-            var node = document.getElementById("elm-container");
+            var node = document.getElementById("puzzle-container");
             var app = Elm.Main.embed(node);
         </script>
     </body>
