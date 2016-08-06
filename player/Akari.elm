@@ -8,8 +8,11 @@ import Grid exposing
     makeGridFromString)
 import GridAdapter
 
-type Msg = NewPuzzle
+type Msg = ReqNewPuzzle
     | CheckPuzzle
+    | NewPuzzleResult String
+    | CheckPuzzleResult String
+    | Error
     | GridAction GridAdapter.GridAction
 
 main = App.beginnerProgram
@@ -18,12 +21,14 @@ main = App.beginnerProgram
     , update = update
     }
 
-update: Msg -> Grid -> Grid
+update: Msg -> Grid -> (Grid, Cmd Msg)
 update msg grid =
     case msg of
-        NewPuzzle -> grid --todo
-        CheckPuzzle -> grid --todo
-        GridAction a -> updateForGrid a grid
+        ReqNewPuzzle -> (grid, Cmd.none) --todo
+        CheckPuzzle -> (grid, Cmd.none) --todo
+        GridAction a -> (updateForGrid a grid, Cmd.none)
+        NewPuzzleResult s -> (newPuzzle s, Cmd.none)
+        CheckPuzzleResult 
 
 updateForGrid: GridAdapter.GridAction -> Grid -> Grid
 updateForGrid action grid =

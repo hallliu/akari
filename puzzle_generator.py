@@ -180,17 +180,17 @@ class GridSquare():
 def call_solver_for_uniqueness(grid):
     env = dict(os.environ)
     env["SAT_SOLVER"] = "bin/glucose"
-    sp = subprocess.Popen(["bin/akari_solver", "-u"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                          universal_newlines=True, env=env)
+    sp = subprocess.Popen(["bin/akari_solver", "-u"], stdin=subprocess.PIPE,
+                          stdout=subprocess.PIPE, universal_newlines=True, env=env)
     input_str = "{} {}\n{}".format(grid.height, grid.width, str(grid))
     res, _ = sp.communicate(input=input_str)
     return int(res) == 1
     
-def main():
+def generate_puzzle(height, width, density):
     best_grid = None
     best_ratio = 1
     for i in range(40):
-        g1 = Grid(25, 25, 0.3)
+        g1 = Grid(height, width, density)
         g1.populate_with_lights()
         g1.search_constraints(call_solver_for_uniqueness)
 
@@ -202,8 +202,4 @@ def main():
             best_ratio = curr_ratio
             best_grid = g1
 
-    print(str(best_grid))
-    print(best_ratio)
-
-if __name__ == "__main__":
-    main()
+    return best_grid, best_ratio
