@@ -1,3 +1,33 @@
+.soln-unknown {
+    display: none;
+}
+
+.soln-incorrect, .soln-complete {
+    width: 30%;
+    height: 20%;
+    margin-bottom: 6px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.soln-incorrect {
+    background-color: #e71256;
+}
+
+.soln-complete {
+    background-color: green;
+}
+
+.soln-incorrect::before {
+    content: "Incorrect";
+}
+
+.soln-complete::before {
+    content: "Correct";
+}
+
 #puzzle-container {
     position: fixed;
     top: 50%;
