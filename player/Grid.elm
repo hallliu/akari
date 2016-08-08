@@ -21,6 +21,25 @@ type Direction =
     Left |
     Right
 
+type alias Cell = {
+    location: Location,
+    contents: CellContents,
+    litCount: Int,
+    up_nbr: Maybe Location,
+    down_nbr: Maybe Location,
+    left_nbr: Maybe Location,
+    right_nbr: Maybe Location
+}
+
+type alias Grid = {
+    initialState: Dict Location Cell,
+    cells: Dict Location Cell,
+    height: Int,
+    width: Int
+} 
+
+-- Utility functions for creating and working with Cells
+
 moveFromLocation: Location -> Int -> Int -> Direction -> Maybe Location
 moveFromLocation (y, x) h w d = case d of
    Up ->
@@ -44,31 +63,24 @@ moveFromLocation (y, x) h w d = case d of
        else
            Just (y, x + 1)
 
-type alias Cell = {
-    location: Location,
-    contents: CellContents,
-    litCount: Int,
-    up_nbr: Maybe Location,
-    down_nbr: Maybe Location,
-    left_nbr: Maybe Location,
-    right_nbr: Maybe Location
-}
-
-type alias Grid = {
-    initialState: Dict Location Cell,
-    cells: Dict Location Cell,
-    height: Int,
-    width: Int
-} 
-
 listProduct: List a -> List b -> List (a, b)
 listProduct x y = List.concatMap (\a -> List.map (\b -> (a, b)) y) x
+
+getCellContentsFromChar: Char -> CellContents
+getCellContentsFromChar c = case c of
+    'X' -> Solid
+    '0' -> Constraint 0
+    '1' -> Constraint 1
+    '2' -> Constraint 2
+    '3' -> Constraint 3
+    '4' -> Constraint 4
+    _ -> Empty
 
 makeCell: Location -> Char -> (Location, Cell)
 makeCell loc c =
     let
         newCell = {
-            location = loc, contents = getCellContents c, litCount = 0,
+            location = loc, contents = getCellContentsFromChar c, litCount = 0,
             up_nbr = Nothing,
             down_nbr = Nothing,
             left_nbr = Nothing,
@@ -76,53 +88,7 @@ makeCell loc c =
     in
         (loc, newCell)
 
-putNeighborsInCell: Cell -> Grid -> Cell
-putNeighborsInCell cell grid = 
-    let
-        getNeighbor: Direction -> Maybe Location 
-        getNeighbor dir = moveFromLocation cell.location grid.height grid.width dir
-    in
-        {cell |
-            up_nbr = getNeighbor Up,
-            down_nbr = getNeighbor Down,
-            right_nbr = getNeighbor Right,
-            left_nbr = getNeighbor Left}
-
-populateWithNeighbors: Grid -> Grid
-populateWithNeighbors grid =
-    let
-        newCells = Dict.map (\_ c -> putNeighborsInCell c grid) grid.cells
-    in
-        {grid | initialState = newCells, cells = newCells}
-
-makeGrid: Int -> Int -> List Char -> Grid
-makeGrid height width data = 
-    let 
-        g = Dict.fromList <| List.map2 makeCell (listProduct [0..height - 1] [0..width - 1]) data
-    in
-        populateWithNeighbors {initialState = g, cells = g, height = height, width = width}
-
-getSightLine: Grid -> Cell -> List Cell
-getSightLine grid cell =
-    let
-        directions: List (Cell -> Maybe Location)
-        directions = [.up_nbr, .down_nbr, .left_nbr, .right_nbr]
-
-        getNeighbor: Cell -> (Cell -> Maybe Location) -> Maybe Cell
-        getNeighbor c dirFn = Maybe.andThen (dirFn c) (\l -> Dict.get l grid.cells)
-
-        sightLineHelper: List Cell -> (Cell -> Maybe Location) -> Maybe Cell -> List Cell
-        sightLineHelper cells dirFn currCell = case currCell of
-            Just cc -> case cc.contents of
-                Solid -> cells
-                Constraint _ -> cells
-                _ -> sightLineHelper (cc :: cells) dirFn (getNeighbor cc dirFn)
-            Nothing -> cells
-
-        getSightLineInDirection: (Cell -> Maybe Location) -> List Cell
-        getSightLineInDirection dirFn = sightLineHelper [] dirFn (getNeighbor cell dirFn)
-    in
-        List.concat <| List.map getSightLineInDirection directions
+-- Functions for changing how a cell is lit
 
 castLightOnCell: Cell -> Cell
 castLightOnCell cell =
@@ -221,6 +187,75 @@ isCellLight cell = case cell.contents of
     BadLight -> True
     _ -> False
 
+-- Functions for Grid creation
+
+getSightLine: Grid -> Cell -> List Cell
+getSightLine grid cell =
+    let
+        directions: List (Cell -> Maybe Location)
+        directions = [.up_nbr, .down_nbr, .left_nbr, .right_nbr]
+
+        getNeighbor: Cell -> (Cell -> Maybe Location) -> Maybe Cell
+        getNeighbor c dirFn = Maybe.andThen (dirFn c) (\l -> Dict.get l grid.cells)
+
+        sightLineHelper: List Cell -> (Cell -> Maybe Location) -> Maybe Cell -> List Cell
+        sightLineHelper cells dirFn currCell = case currCell of
+            Just cc -> case cc.contents of
+                Solid -> cells
+                Constraint _ -> cells
+                _ -> sightLineHelper (cc :: cells) dirFn (getNeighbor cc dirFn)
+            Nothing -> cells
+
+        getSightLineInDirection: (Cell -> Maybe Location) -> List Cell
+        getSightLineInDirection dirFn = sightLineHelper [] dirFn (getNeighbor cell dirFn)
+    in
+        List.concat <| List.map getSightLineInDirection directions
+
+putNeighborsInCell: Cell -> Grid -> Cell
+putNeighborsInCell cell grid = 
+    let
+        getNeighbor: Direction -> Maybe Location 
+        getNeighbor dir = moveFromLocation cell.location grid.height grid.width dir
+    in
+        {cell |
+            up_nbr = getNeighbor Up,
+            down_nbr = getNeighbor Down,
+            right_nbr = getNeighbor Right,
+            left_nbr = getNeighbor Left}
+
+populateWithNeighbors: Grid -> Grid
+populateWithNeighbors grid =
+    let
+        newCells = Dict.map (\_ c -> putNeighborsInCell c grid) grid.cells
+    in
+        {grid | initialState = newCells, cells = newCells}
+
+makeGrid: Int -> Int -> List Char -> Grid
+makeGrid height width data = 
+    let 
+        g = Dict.fromList <| List.map2 makeCell (listProduct [0..height - 1] [0..width - 1]) data
+    in
+        populateWithNeighbors {initialState = g, cells = g, height = height, width = width}
+
+makeGridFromString: Int -> Int -> String -> Grid
+makeGridFromString height width data =
+    let 
+        isValidChar: Char -> Bool
+        isValidChar c =
+            (c == '_')
+            || (c == 'X')
+            || (c == '0')
+            || (c == '1')
+            || (c == '2')
+            || (c == '3')
+            || (c == '4')
+
+        trimmedData = String.filter isValidChar data
+    in
+        populateWithNeighbors <| makeGrid height width <| String.toList trimmedData
+
+-- Functions for manipulating and getting information on a Grid 
+
 replaceCellsInGrid: Grid -> List Cell -> Grid
 replaceCellsInGrid grid newCells =
     let
@@ -277,6 +312,19 @@ toggleCantLight loc grid =
 reset: Grid -> Grid
 reset grid = {grid | cells = grid.initialState}
 
+getLights: Grid -> List Location
+getLights grid =
+    let
+        foldFn: Location -> Cell -> List Location -> List Location
+        foldFn loc cell locs = case cell.contents of
+            Light -> loc :: locs
+            BadLight -> loc :: locs
+            _ -> locs
+    in
+        Dict.foldr foldFn [] grid.cells
+
+-- Utilities for debugging
+
 gridToString: Grid -> String
 gridToString grid =
     let
@@ -304,31 +352,4 @@ printCellContents c = case c of
         Just (c, _) -> c
         Nothing -> '9'
 
-getCellContents: Char -> CellContents
-getCellContents c = case c of
-    'X' -> Solid
-    '0' -> Constraint 0
-    '1' -> Constraint 1
-    '2' -> Constraint 2
-    '3' -> Constraint 3
-    '4' -> Constraint 4
-    _ -> Empty
 
-makeGridFromString: Int -> Int -> String -> Grid
-makeGridFromString height width data =
-    let 
-        isValidChar: Char -> Bool
-        isValidChar c =
-            (c == '_')
-            || (c == 'X')
-            || (c == '0')
-            || (c == '1')
-            || (c == '2')
-            || (c == '3')
-            || (c == '4')
-
-        trimmedData = String.filter isValidChar data
-    in
-        populateWithNeighbors <| makeGrid height width <| String.toList trimmedData
-
-testgrid = makeGridFromString 3 2 "______"

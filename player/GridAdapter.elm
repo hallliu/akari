@@ -7,14 +7,23 @@ import Html.Attributes as Attr
 import Html.Events as Events
 import Dict
 import Json.Decode as Json exposing (Decoder, (:=))
+import Json.Encode
 
 type GridAction = ToggleLight Location
     | ToggleCantLight Location
     | Reset
     | NoAction
 
-getDecoder: Location -> Decoder GridAction
-getDecoder loc = 
+encodeLocationList: List Location -> Json.Encode.Value
+encodeLocationList locs =
+    let
+        locToJson: Location -> Json.Encode.Value
+        locToJson (y, x) = Json.Encode.list [Json.Encode.int y, Json.Encode.int x]
+    in
+        Json.Encode.list <| List.map locToJson locs
+
+getClickDecoder: Location -> Decoder GridAction
+getClickDecoder loc = 
     let
         getMessage: Int -> Decoder GridAction
         getMessage mouseNumber =
@@ -58,7 +67,7 @@ getActionsForCell cell =
     in case cell.contents of
         Solid -> [disableContextMenu]
         Constraint _ -> [disableContextMenu]
-        _ -> [handleRightClick, Events.on "click" <| getDecoder cell.location]
+        _ -> [handleRightClick, Events.on "click" <| getClickDecoder cell.location]
 
 getTextForCellContents: CellContents -> List (Html GridAction)
 getTextForCellContents contents = case contents of

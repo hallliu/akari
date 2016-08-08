@@ -4,9 +4,12 @@ import Html.Events as Event
 import Html.App as App
 import Debug
 import Json.Decode as Json exposing (Decoder, (:=), decodeString)
+import Json.Encode
+import Http
+import Task
 
 import Grid exposing 
-    (Grid, Location, toggleLight, toggleCantLight, reset,
+    (Grid, Location, toggleLight, toggleCantLight, reset, getLights,
     makeGridFromString)
 import GridAdapter
 
@@ -14,7 +17,7 @@ type Msg = ReqNewPuzzle
     | CheckPuzzle
     | NewPuzzleResult String
     | CheckPuzzleResult String
-    | Error
+    | Error String
     | GridAction GridAdapter.GridAction
 
 type SolutionState = Unknown
@@ -23,6 +26,7 @@ type SolutionState = Unknown
 
 type alias Model = {
     grid: Grid,
+    puzzleId: Int,
     lastCheckedSolutionState: SolutionState
     }
 
@@ -36,14 +40,17 @@ main = App.program
 update: Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        ReqNewPuzzle -> (model, Cmd.none) --todo
-        CheckPuzzle -> (model, Cmd.none) --todo
+        ReqNewPuzzle -> (model, getNewPuzzle 25 25)
+        CheckPuzzle -> (model, checkPuzzleSolution model.puzzleId model.grid)
         GridAction a -> ({model | grid = updateForGrid a model.grid}, Cmd.none)
         NewPuzzleResult s -> case newPuzzle s of
-            Ok newGrid -> ({grid = newGrid, lastCheckedSolutionState = Unknown}, Cmd.none)
+            Ok (puzzleId, newGrid) ->
+                ({grid = newGrid, lastCheckedSolutionState = Unknown, puzzleId = puzzleId}
+                , Cmd.none)
             Err err -> (model, (\s -> Cmd.none) <| Debug.log "json parse" err)
-        CheckPuzzleResult r -> (model, Cmd.none) -- todo
-        Error -> (model, Cmd.none) -- todo
+        CheckPuzzleResult r ->
+            ({model | lastCheckedSolutionState = checkResultToState r}, Cmd.none)
+        Error e -> (\_ -> (model, Cmd.none)) <| Debug.log "http error" e
 
 updateForGrid: GridAdapter.GridAction -> Grid -> Grid
 updateForGrid action grid =
@@ -60,7 +67,8 @@ model = ({grid = makeGridFromString 5 5 <|
      2____
      __X__
      _____"
-    , lastCheckedSolutionState = Unknown}, Cmd.none)
+    , lastCheckedSolutionState = Unknown
+    , puzzleId = -1}, Cmd.none)
 
 view: Model -> Html Msg
 view model = div [Attr.id "puzzle-container"] [
@@ -79,13 +87,41 @@ solutionStateToClass ss = case ss of
     Incorrect -> "soln-incorrect"
     Complete -> "soln-complete"
 
-newPuzzle: String -> Result String Grid
+checkResultToState: String -> SolutionState
+checkResultToState resultString =
+    if resultString == "soln-unknown" then
+        Unknown
+    else if resultString == "soln-incorrect" then
+        Incorrect
+    else
+        Complete
+
+getNewPuzzle: Int -> Int -> Cmd Msg
+getNewPuzzle height width =
+    let
+        url = Http.url "/new_puzzle" [("height", toString height), ("width", toString width)]
+    in
+        Task.perform (Error << toString) NewPuzzleResult <| Http.getString url
+
+checkPuzzleSolution: Int -> Grid -> Cmd Msg
+checkPuzzleSolution puzzleId grid =
+    let
+        lights = GridAdapter.encodeLocationList <| getLights grid
+        gridLightJson = Json.Encode.object [("id", Json.Encode.int puzzleId), ("lights", lights)]
+        gridLightBody = Http.string <| Json.Encode.encode 0 gridLightJson
+        httpTask = Http.post ("result" := Json.string) "/check_puzzle" gridLightBody
+    in
+        Task.perform (Error << toString) CheckPuzzleResult httpTask
+
+newPuzzle: String -> Result String (Int, Grid)
 newPuzzle gridJson =
     let
         gridDataDec = "data" := Json.string
         gridHeightDec = "height" := Json.int
         gridWidthDec = "width" := Json.int
+        puzzleIdDec = "puzzle_id" := Json.int
         gridDecoder = Json.object3 makeGridFromString gridHeightDec gridWidthDec gridDataDec
+        puzzleDataDecoder = Json.tuple2 (,) puzzleIdDec gridDecoder
     in
-        decodeString gridDecoder gridJson
+        decodeString puzzleDataDecoder gridJson
 
