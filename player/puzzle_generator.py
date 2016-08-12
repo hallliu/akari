@@ -90,6 +90,9 @@ class Grid():
         set_cell_is_constrained_in_list(cell_list[:num_constrained], True)
         set_cell_is_constrained_in_list(cell_list[num_constrained:], False)
 
+    def get_light_location_set(self):
+        return set(x.location for x in self.squares.values() if x.is_light)
+
     def _is_unique_with_constraints(self, is_unique, cell_list, num_constrained):
         self.set_num_constraints(cell_list, num_constrained)
         return is_unique(self)
@@ -179,8 +182,8 @@ class GridSquare():
 
 def call_solver_for_uniqueness(grid):
     env = dict(os.environ)
-    env["SAT_SOLVER"] = "bin/glucose"
-    sp = subprocess.Popen(["bin/akari_solver", "-u"], stdin=subprocess.PIPE,
+    env["SAT_SOLVER"] = "../solver/bin/glucose"
+    sp = subprocess.Popen(["../solver/bin/akari_solver", "-u"], stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE, universal_newlines=True, env=env)
     input_str = "{} {}\n{}".format(grid.height, grid.width, str(grid))
     res, _ = sp.communicate(input=input_str)
@@ -201,5 +204,12 @@ def generate_puzzle(height, width, density):
         if curr_ratio < best_ratio:
             best_ratio = curr_ratio
             best_grid = g1
+        if best_ratio < 0.4:
+            return best_grid, best_ratio
 
     return best_grid, best_ratio
+
+if __name__ == "__main__":
+    grid, ratio = generate_puzzle(25, 25, 0.4)
+    print(str(grid))
+    print(ratio)

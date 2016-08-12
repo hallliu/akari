@@ -120,8 +120,10 @@ newPuzzle gridJson =
         gridHeightDec = "height" := Json.int
         gridWidthDec = "width" := Json.int
         puzzleIdDec = "puzzle_id" := Json.int
-        gridDecoder = Json.object3 makeGridFromString gridHeightDec gridWidthDec gridDataDec
-        puzzleDataDecoder = Json.tuple2 (,) puzzleIdDec gridDecoder
+        resultMaker: Int -> Int -> String -> Int -> (Int, Grid)
+        resultMaker height width data puzzleId = (puzzleId, makeGridFromString height width data)
+        gridDecoder =
+            Json.object4 resultMaker gridHeightDec gridWidthDec gridDataDec puzzleIdDec
     in
-        decodeString puzzleDataDecoder gridJson
+        decodeString gridDecoder gridJson
 
