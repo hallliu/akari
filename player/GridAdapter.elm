@@ -67,7 +67,7 @@ getActionsForCell cell =
     in case cell.contents of
         Solid -> [disableContextMenu]
         Constraint _ -> [disableContextMenu]
-        _ -> [handleRightClick, Events.on "click" <| getClickDecoder cell.location]
+        _ -> [handleRightClick, Events.on "mousedown" <| getClickDecoder cell.location]
 
 getTextForCellContents: CellContents -> List (Html GridAction)
 getTextForCellContents contents = case contents of

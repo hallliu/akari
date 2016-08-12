@@ -3,6 +3,7 @@ glucose-syrup/*
 bin/
 Cargo.lock
 elm-stuff/
+__pycache__/
 *.js
 *.swp
 *.swo
