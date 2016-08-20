@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 from flask import Flask, send_file, request
 import flask
 import json
