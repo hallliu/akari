@@ -80,7 +80,8 @@ fn make_constraint_cnf_cache(size: u32) -> Vec<(u32, Vec<bool>)> {
 }
 
 impl ConstraintCnfGenerator {
-    fn get_constraints<'a>(&'a self, sat_ids: Vec<i32>, num_true: u32) -> Box<Iterator<Item=Vec<i32>> + 'a> {
+    fn get_constraints<'a>(&'a self, sat_ids: Vec<i32>, num_true: u32)
+            -> Box<Iterator<Item=Vec<i32>> + 'a> {
         let ref bool_arrays = self.cnf_clauses[sat_ids.len()];
         Box::new(bool_arrays.iter()
             .filter(move |&x| x.0 != num_true)
@@ -106,7 +107,8 @@ pub fn make_cnf_formula(grid: &GridData) -> CnfFormula {
             continue;
         }
         if grid.grid.contents[grid_idx] & IS_CONSTRAINED != 0 {
-            clauses.extend(get_numerical_constraint_clauses(grid, &constraint_cnf_gen, &grid_to_cnf, grid_idx));
+            clauses.extend(get_numerical_constraint_clauses(
+                    grid, &constraint_cnf_gen, &grid_to_cnf, grid_idx));
         } 
         if does_need_light(grid.grid.contents[grid_idx]) {
             clauses.push(get_sight_line_clauses(&grid, &grid_to_cnf, grid_idx));

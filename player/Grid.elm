@@ -40,6 +40,9 @@ type alias Grid = {
 
 -- Utility functions for creating and working with Cells
 
+listProduct: List a -> List b -> List (a, b)
+listProduct x y = List.concatMap (\a -> List.map (\b -> (a, b)) y) x
+
 moveFromLocation: Location -> Int -> Int -> Direction -> Maybe Location
 moveFromLocation (y, x) h w d = case d of
    Up ->
@@ -62,9 +65,6 @@ moveFromLocation (y, x) h w d = case d of
            Nothing
        else
            Just (y, x + 1)
-
-listProduct: List a -> List b -> List (a, b)
-listProduct x y = List.concatMap (\a -> List.map (\b -> (a, b)) y) x
 
 getCellContentsFromChar: Char -> CellContents
 getCellContentsFromChar c = case c of

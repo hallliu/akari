@@ -17,7 +17,7 @@ def new_puzzle():
     global next_puzzle_id
     height = int(request.args.get("height", 5))
     width = int(request.args.get("width", 5))
-    density = 0.4 # default
+    density = 0.35 # default
     grid, ratio = generate_puzzle(height, width, density)
     puzzles[next_puzzle_id] = grid
     result = {

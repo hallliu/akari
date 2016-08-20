@@ -39,7 +39,9 @@ fn main() {
     let (height, width) = read_grid_dims().unwrap();
     let grid_str = read_grid_string().unwrap();
 
-    let mut grid = utils::precompute_data(utils::get_grid_from_string(&grid_str, height, width).unwrap());
+    let mut grid = utils::precompute_data(
+            utils::get_grid_from_string(&grid_str, height, width).unwrap());
+
     let (light_locs, is_uniq) = solver::solve_puzzle(&mut grid, solve_sat_with_glucose).unwrap();
     if pretty_print {
         println!("{}", utils::print_griddata_to_string(&grid, true));

@@ -6,6 +6,15 @@ import random
 import subprocess
 import os
 
+# Constants for tuning the generation
+INCREMENTAL_CONSTRAINT_REMOVAL_TRIES = 400
+NUM_RANDOM_GRIDS_TO_TRY = 40
+CONSTRAINED_GRID_RATIO_THRESHOLD = 0.4
+
+# Binaries that do the heavy lifting of solving the puzzle
+GLUCOSE_PATH = "../solver/bin/glucose"
+AKARI_SOLVER_PATH = "../solver/bin/akari_solver"
+
 class Grid():
     height = -1
     width = -1
@@ -39,6 +48,10 @@ class Grid():
                 cell.set_num_surrounding_lights()
                 cell.has_number_constraint = True
 
+    """
+    Tries to make as few of the grid's solid blocks carry a surrounding-light constraint as
+    possible, while still having the puzzle be uniquely solvable.
+    """
     def search_constraints(self, is_unique):
         self.set_constraints_full()
         cells_with_constraints = [x for x in self.squares.values()
@@ -51,10 +64,14 @@ class Grid():
         self.binary_search_to_constraints(cells_with_constraints, is_unique)
         self.incrementally_remove_constraints(cells_with_constraints, is_unique)
 
+    """
+    Tries INCREMENTAL_CONSTRAINT_REMOVAL_TRIES times to randomly select a solid square,
+    remove its constraint, and see if the puzzle is still uniquely solvable.
+    """
     def incrementally_remove_constraints(self, cell_list, is_unique):
         cell_set = set(x.location for x in cell_list)
         iters = 0
-        while iters < 200 and len(cell_set) > 0:
+        while iters < INCREMENTAL_CONSTRAINT_REMOVAL_TRIES and len(cell_set) > 0:
             cell_to_unconstrain = random.sample(cell_set, 1)[0]
             self.squares[cell_to_unconstrain].has_number_constraint = False
             if is_unique(self):
@@ -62,7 +79,11 @@ class Grid():
             else:
                 self.squares[cell_to_unconstrain].has_number_constraint = True 
             iters += 1
-        
+
+    """
+    Finds a point i in cell_list where setting the constraints on cell_list[:i] results in a puzzle
+    that has a unique solution, but where setting the constraints on cell_list[:i - 1] does not.
+    """
     def binary_search_to_constraints(self, cell_list, is_unique):
         lower = 0
         upper = len(cell_list)
@@ -182,8 +203,8 @@ class GridSquare():
 
 def call_solver_for_uniqueness(grid):
     env = dict(os.environ)
-    env["SAT_SOLVER"] = "../solver/bin/glucose"
-    sp = subprocess.Popen(["../solver/bin/akari_solver", "-u"], stdin=subprocess.PIPE,
+    env["SAT_SOLVER"] = GLUCOSE_PATH
+    sp = subprocess.Popen([AKARI_SOLVER_PATH, "-u"], stdin=subprocess.PIPE,
                           stdout=subprocess.PIPE, universal_newlines=True, env=env)
     input_str = "{} {}\n{}".format(grid.height, grid.width, str(grid))
     res, _ = sp.communicate(input=input_str)
@@ -192,7 +213,7 @@ def call_solver_for_uniqueness(grid):
 def generate_puzzle(height, width, density):
     best_grid = None
     best_ratio = 1
-    for i in range(40):
+    for i in range(NUM_RANDOM_GRIDS_TO_TRY):
         g1 = Grid(height, width, density)
         g1.populate_with_lights()
         g1.search_constraints(call_solver_for_uniqueness)
@@ -204,12 +225,7 @@ def generate_puzzle(height, width, density):
         if curr_ratio < best_ratio:
             best_ratio = curr_ratio
             best_grid = g1
-        if best_ratio < 0.4:
+        if best_ratio < CONSTRAINED_GRID_RATIO_THRESHOLD:
             return best_grid, best_ratio
 
     return best_grid, best_ratio
-
-if __name__ == "__main__":
-    grid, ratio = generate_puzzle(25, 25, 0.4)
-    print(str(grid))
-    print(ratio)
