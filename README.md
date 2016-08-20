@@ -5,7 +5,11 @@ See [here](https://en.wikipedia.org/wiki/Light_Up_&#40puzzle&#41) for the rules 
 The solver is written in Rust, and can be built using Cargo.
 
 The player is written in Elm, with the puzzle generation and server written in Python. You will
-need Flask to run the server.
+need Flask to run the server. To build the player frontend, execute
+```
+elm make Akari.elm --output static/akari.js
+```
+in the player directory.
 
 You will also need a SAT solver to run the puzzle solver. The puzzle solver was tested using
 [Glucose](http://www.labri.fr/perso/lsimon/glucose/).
